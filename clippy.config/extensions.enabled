@@ -1,0 +1,5 @@
+# Enabled lifecycle extensions, one name per line; `#` comments.
+# Available in this clippy version: auto-create-pr (fires on verify-PASSED;
+# invokes `gh pr create --fill`). Uncomment to enable.
+
+# auto-create-pr

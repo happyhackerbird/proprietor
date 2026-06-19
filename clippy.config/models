@@ -1,0 +1,10 @@
+# Clippy dispatch-model configuration.
+#
+# Override the parent model per-dispatch-class. Absence (file absent OR class
+# absent OR all lines commented) = parent model.
+# Classes: impl, verify. `impl` applies to every unit.
+# Models: opus, sonnet, haiku.
+# Format: `<class>: <model>` per line; `#` comments.
+# Recommended split (uncomment to adopt):
+# impl: sonnet
+# verify: opus

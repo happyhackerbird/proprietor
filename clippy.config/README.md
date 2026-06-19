@@ -1,0 +1,1 @@
+This directory is operator-editable: add project lenses to `lenses.md`, toggle extensions in `extensions.enabled`, override dispatch models in `models`. Runtime state lives at `.clippy/runs/` and is gitignored — do not edit there.

@@ -1,0 +1,29 @@
+[project]
+name = "proprietor-engine"
+version = "0.1.0"
+description = "Proprietor fulfilment engine — turns a company into a typed CompanyProfile and reports its cost. Payment-free."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+    "httpx>=0.27",
+    "aiosqlite>=0.20",
+    "tavily-python>=0.5",
+    "openai>=1.30",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
