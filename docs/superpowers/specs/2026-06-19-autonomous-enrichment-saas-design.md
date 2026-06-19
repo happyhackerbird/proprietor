@@ -5,7 +5,7 @@ revenue and costs in USDC via a Circle Agent Wallet.**
 
 - **Event:** Agents Hackathon @ 42berlin, June 19–20 2026 — Agentic Commerce track.
 - **Date:** 2026-06-19
-- **Status:** Design — not yet implemented.
+- **Status:** Design — validated against the Circle Agent Stack (2026-06-20, see §3.5) — not yet implemented.
 
 ---
 
@@ -59,23 +59,86 @@ The autonomous behaviors that fall out of this:
 3. **Solvency / throttling.** Track runway from the wallet balance. If runway is short, refuse
    negative-EV work and pause non-essential spend.
 
+## 3.5 Circle Agent Stack — validated integration (ground truth, checked 2026-06-20)
+
+Validated against the live docs (`developers.circle.com/agent-stack`) and the cloned
+`agent-stack-ecosystem-kits` repo. Facts that shape the build:
+
+**Wallet & network**
+- Agent Wallets are **2-of-2 MPC, user-custody Smart Contract Accounts (SCAs)**, operated via the
+  **Circle CLI** (`@circle-fin/cli`). Auth is **email + OTP** (no API key); a one-time **Terms-of-Use**
+  acceptance is a manual human step.
+- A wallet is **counterfactual** — it must be **deployed** (one outbound tx, per chain) before it can
+  sign x402 payments (EIP-1271). Receiving USDC does *not* deploy it. → setup needs an explicit deploy step.
+- Use **Arc Testnet (`ARC-TESTNET`)** for the demo: testnet wallets are **auto-funded ~20 USDC** on
+  creation — zero faucet friction, no real money. (The ecosystem kit hardcodes Base **mainnet**; we
+  drive the CLI on testnet instead.)
+- CLI actions we use: `wallet create --type agent --testnet`, `wallet list`, `wallet balance`,
+  `wallet transfer` (plain USDC send), `services search/inspect/pay` (x402 buyer).
+
+**x402 / nanopayments**
+- **Buyer side** is fully supported (`circle services pay` / kit `circle_pay_service`). Nanopayments =
+  **gas-free, batched x402 micropayments** via **Circle Gateway**, sub-cent (to $0.000001) — ideal for
+  per-call supplier billing.
+- ⚠️ x402 **charges before the upstream resolves** → a failed paid call is **non-refundable**; never
+  blind-retry. → the CFO must **decline before paying**, not refund after.
+- Some sellers require **Gateway batched** payments (`GatewayWalletBatched`) → a prior `gateway deposit`.
+
+**Seller side (critical correction)**
+- The **ecosystem kit is buyer-only** — no seller code, no `services register`. **BUT** Circle ships a
+  seller SDK: **`@circle-fin/x402-batching`** with **Express middleware**
+  (`createGatewayMiddleware({ sellerAddress, facilitatorUrl })` + `gateway.require("$0.01")`) that
+  auto-returns 402 and verifies payment. → our **storefront and supplier-agent are built on this
+  middleware** (Node/Express), not hand-rolled and not from the kit.
+
+**Marketplace**
+- Real product at `agents.circle.com/services` — a **curated** catalog. Discovery (search + price/schema
+  **inspect**) is **programmatic and real**. **Listing your own service is gated/manual** (no self-serve
+  submit) → for the demo, our service is discoverable/inspectable **as an x402 endpoint by URL**; an
+  actual catalog listing is out of scope.
+
+**Skills & language**
+- **Circle Skills** = build-time, LLM-optimized **docs** for the coding assistant (`circle skill
+  install`) — they improve *how we build*, **not a runtime capability**. Install `use-circle-wallets` /
+  `use-gateway` while building.
+- **Language:** the money layer (CLI + `@circle-fin/x402-batching`) is **TypeScript/Node only**. No
+  first-class Python for Agent Wallets / x402; Python can only shell out to the `circle` CLI.
+
+**Spend controls**
+- Circle **Spending Policies** (native): transfer limits, recipient allowlists, contract blocklists,
+  daily/monthly USDC caps — **and they apply to x402 payments**; sanctions screening runs on every
+  transfer. → our budget caps = Circle policies; our "approval threshold" = an **app-level gate** (like
+  the kit's `canUseTool` y/N prompt) layered on top.
+
+### 3.5.1 Architecture decision forced by the above
+
+The money layer is TypeScript; our fulfilment engine is Python. **Recommended — Option B (polyglot):**
+- **Node/TS money+web layer:** the x402 storefront + supplier-agent (`@circle-fin/x402-batching` Express
+  middleware), treasury ops (Circle CLI), the CFO loop (Claude Agent SDK in TS).
+- **Python fulfilment service:** the enrichment engine (§4.2) runs as a plain internal HTTP service the
+  Node storefront calls. No crypto in Python.
+- Alternatives: **A)** all-TypeScript (port the engine to TS — clean single stack, more porting work);
+  **C)** all-Python shelling out to the `circle` CLI for buyer ops and **hand-rolling** seller-side x402
+  verification (riskiest — re-implements SCA/EIP-1271 verification). **Confirm before we write the plan.**
+
 ## 4. Architecture
 
 A small set of single-purpose units with clear interfaces:
 
 | Unit | Responsibility | Depends on |
 |---|---|---|
-| **Storefront** | The x402-protected HTTP endpoint, **listed on the Circle Agent Marketplace** so buyers can discover it. Publishes schema + price, issues `402`, verifies payment, returns brief + receipt. | Treasury, CFO, Fulfilment, Marketplace |
+| **Storefront** | The x402-paid HTTP endpoint, built on Circle's **`@circle-fin/x402-batching` Express middleware** (`gateway.require(...)`) — auto-issues `402`, verifies payment, returns brief + receipt. Discoverable/inspectable as an x402 service by URL (see §3.5: real Marketplace *listing* is gated). | Treasury, CFO, Fulfilment |
 | **CFO (pricing brain)** | Estimates COGS, sets/adjusts public price, enforces accept/decline + solvency policy. | Treasury, Ledger |
 | **Fulfilment engine** | Turns a `company` into a typed `CompanyProfile`: disambiguation → depth-tiered research (Tavily search + Nebius synthesis) → cached result, reporting actual COGS. See §4.2. | Supplier(s) |
-| **Treasury (Circle adapter)** | Wraps the Circle Agent Wallet: balance, receive, send, list transactions. | Circle SDK / starter kit |
+| **Treasury (Circle adapter)** | Drives the Circle Agent Wallet via the **Circle CLI**: create/deploy, balance, transfer, `services pay`. SCA must be deployed before paying (§3.5). | Circle CLI |
 | **Ledger** | Append-only record of every job: revenue, itemized COGS, tx hashes, margin, and the agent's reasoning. | — |
 | **Dashboard / CLI** | Read-only view of treasury, price history, and the ledger. The demo surface. | Ledger, Treasury |
 | **Customer-agent (demo harness)** | A separate agent that discovers the service, inspects price/schema, pays, and consumes the brief — proves the A2A loop. | Storefront, its own wallet |
 
-**Framework:** the autonomous loop is implemented with an agent framework (default: **Claude Agent
-SDK**) and the **Circle Agent Stack starter kit** for the wallet. Language default **TypeScript/Node**
-(the x402 + Circle + agent-SDK ecosystem is JS-first); Python is an acceptable alternative.
+**Framework & language:** see §3.5.1 for the validated decision. Recommended split: a **Node/TS**
+money+web layer (Claude Agent SDK loop, `@circle-fin/x402-batching` storefront/supplier, Circle CLI
+treasury) with the **Python** fulfilment engine (§4.2) behind it as an internal HTTP service. The money
+layer is TS-only; Python touches no crypto.
 
 ### 4.1 Where USDC actually moves (important design decision)
 
@@ -92,6 +155,10 @@ suppliers in USDC" needs a deliberate design. Two options:
 
 Recommendation: **build the supplier-agent.** It is the single highest-leverage way to make the wallet
 load-bearing on *both* sides, and it doubles as a second demonstrable agent in the system.
+**Validated (§3.5):** both the storefront and the supplier-agent are Express services using Circle's
+**`@circle-fin/x402-batching`** seller middleware — `gateway.require("$0.001")` per route — so payment
+verification is Circle's code, not ours. Sub-cent **nanopayments** fit per-call supplier pricing exactly.
+Each agent's SCA wallet must be **deployed once** before it can receive/sign (§3.5).
 
 ### 4.2 Fulfilment engine (the enrichment pipeline)
 
@@ -118,14 +185,21 @@ must price or scope to protect its margin.
 
 ## 5. Data flow (per request)
 
-1. Buyer-agent **discovers the service on the Circle Agent Marketplace** and reads its **schema + current price**.
-2. Buyer POSTs `{ domain }` → storefront returns **`402 Payment Required`** (price, pay-to address, schema).
-3. Buyer **pays USDC** → revenue confirmed in the treasury.
-4. Storefront verifies payment, hands the job to the **CFO**.
-5. CFO estimates COGS vs. price → **accept / scope-down / decline** (decline ⇒ refund or partial).
-6. Fulfilment runs research, **paying the supplier-agent in USDC per call**, and returns a `CompanyProfile`.
-7. Storefront returns the **brief + receipt** (revenue, itemized COGS, tx hashes, gross margin).
-8. Ledger records the job; CFO **updates the public price** if margin has drifted.
+0. **(Setup, once)** Treasury + supplier-agent wallets are created on **Arc Testnet** (auto-funded ~20
+   USDC) and **deployed** (one outbound tx each) so they can sign x402 (§3.5).
+1. Buyer-agent discovers the service and **inspects** its x402 price + schema by URL (`circle services
+   inspect`).
+2. Buyer requests enrichment; the storefront **quotes** via `402` at the CFO's current price for the
+   requested depth. *Decline-before-charge:* if the CFO judges the job unprofitable even at the ceiling
+   price, it refuses **without** issuing a payable `402` — the buyer is never charged for a job we'd lose
+   on (x402 has **no refunds**).
+3. Buyer **pays USDC** (gas-free batched **nanopayment**); the `x402-batching` middleware verifies →
+   revenue lands in the treasury.
+4. Storefront runs fulfilment, **paying the supplier-agent per Tavily/Nebius call** in USDC.
+5. Storefront returns the **brief + receipt** (revenue, itemized COGS, tx hashes, margin, `depth_served`,
+   `cache_hit`). If a paid upstream call fails it is **non-refundable** — the agent absorbs the loss and
+   logs it; it never blind-retries (§3.5).
+6. Ledger records the job; the CFO **reprices** if realized margin has drifted.
 
 ## 6. Interfaces (sketch)
 
@@ -155,12 +229,14 @@ LineItem = { supplier, units, unit_price_usdc, amount_usdc, tx_hash }
   price by a step; if it sits well above and volume is healthy, lower by a step (bounded by floor/ceiling).
 - **Solvency rule:** if `balance < runway_floor`, accept only clearly-positive-EV jobs and pause
   discretionary spend.
-- **Approval rule:** spends below `approval_threshold` execute autonomously; a spend at or above it
-  **pauses for human approval before settling**. The threshold defaults high enough that ordinary
-  per-call COGS never trips it — so the agent stays fully autonomous in steady state and only escalates
-  anomalies (e.g. a single job whose estimated COGS is unusually large). This satisfies Circle's
-  "handle approval before spend" capability without diluting the autonomy thesis: autonomous by
-  default, supervised only at the tail.
+- **Spend controls — two layers (validated §3.5):**
+  - *Hard caps via **Circle Spending Policies*** (native): daily/monthly USDC limits + a recipient
+    allowlist (supplier-agent only) — enforced on x402 payments by Circle itself. This is the real,
+    un-bypassable budget.
+  - *Soft **approval gate** (app-level):* spends below `approval_threshold` execute autonomously; at or
+    above it the agent **pauses for human approval** (an app-level `y/N` gate, like the kit's
+    `canUseTool`). The threshold sits above ordinary per-call COGS, so the agent is autonomous in steady
+    state and only escalates anomalies. Autonomous by default, supervised only at the tail.
 - Every decision writes a one-line **reason** to the ledger ("declined: obscure domain, est. COGS
   $0.18 > price $0.10"; "raised price $0.10 → $0.14: 3 of last 5 jobs below target margin").
 
@@ -191,7 +267,7 @@ LineItem = { supplier, units, unit_price_usdc, amount_usdc, tx_hash }
 |---|---|---|
 | A Circle Agent Wallet | ✅ | Treasury (§4) |
 | ≥1 wallet action (balance / payment / transfer / funding / service payment) | ✅ four of them | balance check, receive, send, list-transactions (§4, §5) |
-| Use of the agent framework starter kit | ✅ | Claude Agent SDK + Circle Agent Stack starter kit (§10) |
+| Use of the agent framework starter kit | ✅ | follows the **Claude Agent SDK kit** pattern (Circle tools as an in-process MCP server) + Circle CLI; buyer ops from the kit (§3.5, §10) |
 | A clear agent workflow, not a standalone payment script | ✅ | the business loop (§5) |
 | A receipt / tx hash / payment log / spend ledger | ✅ | `Receipt` with `tx_hashes` + append-only `Ledger` (§6, §8) |
 | A short explanation of what the agent paid for and why | ✅ | `reasoning` on every ledger row (§7, §8) |
@@ -202,10 +278,10 @@ LineItem = { supplier, units, unit_price_usdc, amount_usdc, tx_hash }
 |---|---|---|
 | Circle Agent Wallet | ✅ core | the treasury |
 | Agent Nanopayments | ✅ | x402 per-call billing on the storefront + supplier |
-| Agent Stack starter kits | ✅ | wallet create/list, balances, payments |
-| Circle CLI | ✅ | wallet setup |
-| Circle Agent Marketplace | ✅ | the buyer's **discovery surface** — the enrichment service is listed here so buyer-agents find it, inspect its schema + price, and pay |
-| Circle Skills | ❓ verify | adopt if relevant once we read the starter-kit docs |
+| Agent Stack starter kits | ✅ | Claude Agent SDK kit pattern (buyer: wallet create/list, balance, `services pay`) |
+| Circle CLI | ✅ | the treasury + buyer path: wallet create/deploy/balance/transfer + `services pay` |
+| Circle Agent Marketplace | ◑ partial | discovery via `services search`/`inspect` is real & programmatic; **self-serve listing is gated/curated** (§3.5) → for the demo our service is inspectable **by URL**, not catalog-listed |
+| Circle Skills | ✅ build-time | install `use-circle-wallets` / `use-gateway` to guide the build — docs, not a runtime capability (§3.5) |
 
 **"What we're looking for" — bullets hit:** pays for data/inference/services · discovers + inspects
 pricing + pays + returns a ledger · budgets/caps/policy-based spend · multi-agent paying each other ·
@@ -214,7 +290,8 @@ business workflow · wallet as payment identity + operating budget. The project 
 Circle's own suggested ideas at once — _Developer API Monetization Agent_ and _Agent Expense Manager_.
 
 **Committed enhancements (folded into the design above):**
-1. **Circle Agent Marketplace** is the buyer's discovery surface (§4, §5) — not a bare `GET /schema`.
+1. **Circle Agent Marketplace** discovery (`services inspect`) is the buyer's discovery surface (§4, §5).
+   Note: real catalog *listing* is gated/curated (§3.5), so for the demo discovery is by-URL inspect.
 2. **Approval threshold** (§7) — autonomous below `approval_threshold`, escalate above it; satisfies
    "handle approval before spend" without breaking autonomy.
 
@@ -222,36 +299,60 @@ Circle's own suggested ideas at once — _Developer API Monetization Agent_ and 
 3. Make the buyer-agent's **discover → inspect price → pay → receive** loop a visible beat in the live
    demo — it's exactly the flow the starter kit advertises.
 
-## 10. Tech stack (proposed)
+## 10. Tech stack (validated — Option B, polyglot)
 
-- **Language/runtime:** TypeScript + Node.
-- **Agent loop:** Claude Agent SDK (default) — best fit for the autonomous CFO loop.
-- **Wallet:** Circle Agent Wallet via the Agent Stack starter kit; Circle CLI for setup.
-- **Payments:** x402 for per-call billing on the storefront (and on the supplier-agent).
-- **Suppliers:** Tavily (search) + Nebius TokenFactory (inference), wrapped behind the supplier-agent.
-- **Storage:** SQLite (or JSON) for the ledger. Minimal web dashboard or CLI.
+**Node/TypeScript — money + web layer** (Bun or Node 22+):
+- **Agent loop:** Claude Agent SDK (TS), Circle tools exposed as an in-process MCP server (the
+  `claude-agent-sdk` kit pattern).
+- **Storefront + supplier-agent:** Express + **`@circle-fin/x402-batching`** seller middleware
+  (`gateway.require(...)`) — auto-`402` + payment verification.
+- **Treasury / buyer:** **Circle CLI** (`@circle-fin/cli`) as a subprocess — `wallet create/deploy/
+  balance/transfer`, `services search/inspect/pay`. Email+OTP auth; **Arc Testnet** (auto-funded).
+- **Spend caps:** Circle **Spending Policies** (daily/monthly limits + supplier allowlist).
+
+**Python — fulfilment engine** (internal service the storefront calls, no crypto):
+- FastAPI + httpx + Pydantic; **Tavily** (search) + **Nebius TokenFactory** (OpenAI-compatible inference);
+  SQLite cache. Exposes a plain `POST /enrich` consumed by the Node storefront.
+
+**Shared:** SQLite (or JSON) ledger; minimal web dashboard (or CLI table) for treasury + P&L.
+
+**Build-time:** install Circle Skills `use-circle-wallets` / `use-gateway` to guide the integration.
 
 ## 11. Scope & cut-list (decide what dies first when the clock bites)
 
 Build inside-out; the items lower in this list are the first to cut.
 
-1. **Must have (the thesis):** one paid enrichment end-to-end + per-job receipt + the **dynamic
-   repricing** behavior + a visible ledger. _If only this works, the project still wins its point._
+1. **Must have (the thesis):** one paid enrichment end-to-end (deployed SCA wallets → x402 pay → fulfil
+   → receipt with tx hash) + the **dynamic repricing** behavior + a visible ledger. _If only this works,
+   the project still wins its point._
 2. Supplier-agent (two-sided USDC). _Cut to metered-cost baseline if time-poor._
-3. Solvency throttling under load.
+3. Solvency throttling + Circle Spending Policies under load.
 4. Web dashboard. _Cut to a CLI ledger table._
-5. Refunds on decline. _Cut to "decline before payment."_
+5. The app-level approval gate. _Cut to Spending-Policy caps only._
 
-**Demo fidelity ladder for settlement:** real testnet USDC → testnet with seeded balances → mock
-wallet returning tx-shaped receipts. Pick the highest rung that is reliable on the demo machine.
+**Not optional (validated §3.5):** **decline-before-charge** (x402 has no refunds) and **deploying each
+SCA wallet** before its first payment. Build these in from the start.
+
+**Demo fidelity ladder for settlement:** **Arc Testnet auto-funded USDC** (top rung — real x402, no real
+money, no faucet step) → mock wallet returning tx-shaped receipts (fallback if the network/CLI is flaky
+on the demo machine). Pick the highest rung that is reliable on stage.
 
 ## 12. Open questions (resolve before/at start of build)
 
-1. **Framework:** confirm Claude Agent SDK, or another the team is faster in?
-2. **Settlement:** which rung of the fidelity ladder for the live demo — real testnet or mock?
-3. **Supplier-agent:** build it (recommended, two-sided on-chain) or start with metered costs?
-4. **Enrichment depth:** how many Tavily calls define "shallow" vs "deep" scope (sets the cost spread)?
-5. **Language:** TypeScript (recommended) or Python?
+**Resolved by validation (§3.5):**
+- *Settlement* → **Arc Testnet**, auto-funded USDC.
+- *Wallet* → Circle CLI; SCA must be deployed before paying.
+- *Seller side* → Circle `@circle-fin/x402-batching` Express middleware.
+- *Spend caps* → Circle Spending Policies + app-level approval gate.
+
+**Still open:**
+1. **THE decision — architecture:** confirm **Option B (polyglot: TS money layer + Python engine)**, or
+   pick **A** (all-TS, port the engine) or **C** (all-Python, hand-rolled seller x402). *Blocks the plan.*
+2. **Supplier-agent:** build it (two-sided on-chain, recommended) or start at the metered-cost baseline?
+3. **Enrichment depth:** how many Tavily calls define `basic`/`standard`/`comprehensive` (sets the cost
+   spread)? — instrument the real numbers on day 1.
+4. **ToU + OTP setup:** the Circle email+OTP login and Terms acceptance are manual one-time steps — do
+   them at build start so the demo runs headless.
 
 ## 13. Risks
 
@@ -261,3 +362,12 @@ wallet returning tx-shaped receipts. Pick the highest rung that is reliable on t
   domains.
 - **Margin demo must be legible** — pre-pick a "cheap" and an "expensive" domain so the price-rise is
   guaranteed to fire on stage.
+- **Forgetting to deploy the SCA wallets** → x402 signing fails (EIP-1271). Deploy both wallets in setup
+  and assert deployed-state before the demo (§3.5).
+- **Circle login is manual (email+OTP) + a one-time ToU acceptance** — not headless. Do it at build start;
+  the session lives in `~/.circle`. Don't let the agent auto-accept the Terms.
+- **No refunds + charge-before-resolve** — a flaky supplier call burns USDC. Mitigate: decline-before-
+  charge, pre-warm the suppliers, and never blind-retry a paid call.
+- **The Node↔Python seam** is an extra moving part — keep the Python engine to one dead-simple internal
+  endpoint so the boundary can't wobble during the demo.
+- **Don't over-promise the Marketplace** — listing is gated; demo discovery as `services inspect` by URL.

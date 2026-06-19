@@ -69,7 +69,7 @@ Between jobs, the CFO watches the treasury and **adjusts the public price** to d
 | **Receive payment** | Customer revenue per enrichment (via x402). |
 | **Send payment** | Pays the supplier-agent in USDC per upstream call. |
 | **Agent Nanopayments / x402** | Per-call billing on the storefront endpoint. |
-| **Circle Agent Marketplace** | Discovery surface — Proprietor lists its enrichment service so buyer-agents find, inspect, and pay for it. |
+| **Circle Agent Marketplace** | Discovery surface — buyer-agents `inspect` the enrichment service's x402 price + schema by URL, then pay. (Catalog listing is curated/gated; demo uses by-URL inspect.) |
 | **Transaction logs / receipts** | Every job's revenue + costs returned as on-chain receipts. |
 | **Circle CLI / starter kit** | Creates and manages the wallet at setup. |
 
