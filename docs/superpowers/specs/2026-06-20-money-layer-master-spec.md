@@ -11,6 +11,7 @@ environment):
 - `docs/superpowers/specs/2026-06-20-money-layer-build-spec.md` — **Phase 1** (treasury + x402 scaffold + echo).
 - `docs/superpowers/specs/2026-06-20-storefront-build-spec.md` — **Phase 2** (storefront wrapping `/enrich`).
 - `docs/superpowers/specs/2026-06-20-fulfilment-engine-build-spec.md` — the engine's HTTP contract you call.
+- `docs/superpowers/specs/2026-06-20-cfo-agent-build-spec.md` — **Phase 4** (the CFO agent: the payment brain + ledger).
 
 ---
 
@@ -62,8 +63,11 @@ this; run it once for the three addresses.)
   - **Live-verify:** run `echo-seller` as `SUPPLIER`; pay it from `BUYER` via `circle services pay`;
     confirm a tx hash (or `pending-batch`). This proves the whole Circle loop before any business logic.
 
-**2. Supplier-agent — `supplier/`:** swap the echo handler for a **Tavily + Nebius proxy** (reads keys
-from `.env`), x402-priced per call. This is where the upstream tools are actually paid for in USDC.
+**2. Supplier-agent — `supplier/`:** swap the echo handler for a **per-job research seller** — one
+x402-paid route (`POST /research { company, depth }`) that calls the engine (which uses Tavily + Nebius,
+keys from `.env`) and returns the profile. Priced at **fixed wholesale prices per depth**; the supplier
+absorbs within-tier difficulty variance. This is the service the Proprietor's CFO buys wholesale and
+resells. (See the CFO build spec for the money model.)
 
 **3. Storefront — `storefront/`** (per the storefront-build-spec): paid x402 route **per depth tier**
 wrapping the engine's `POST /enrich`; builds the `Receipt` (revenue, metered cost, margin, guarded
@@ -71,8 +75,9 @@ tx_hash, depth, cache_hit, reasoning); static `PricingProvider`.
   - **Live-verify:** `BUYER` pays `storefront /v1/enrich/standard` → storefront pays `SUPPLIER` → returns
     `{ profile, receipt }` with a tx hash.
 
-**4. (Later phases)** CFO agent (Claude Agent SDK, `canUseTool` budget gate, dynamic repricing) + ledger
-/ dashboard.
+**4. CFO agent + ledger** (Claude Agent SDK, `canUseTool` budget gate, per-order pay-the-supplier loop,
+dynamic repricing) — see `docs/superpowers/specs/2026-06-20-cfo-agent-build-spec.md`. This is the payment
+brain; build it once the supplier + storefront live-verify.
 
 ---
 

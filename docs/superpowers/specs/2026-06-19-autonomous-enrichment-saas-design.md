@@ -192,9 +192,16 @@ suppliers in USDC" needs a deliberate design. Two options:
 Recommendation: **build the supplier-agent.** It is the single highest-leverage way to make the wallet
 load-bearing on *both* sides, and it doubles as a second demonstrable agent in the system.
 **Validated (§3.5):** both the storefront and the supplier-agent are Express services using Circle's
-**`@circle-fin/x402-batching`** seller middleware — `gateway.require("$0.001")` per route — so payment
-verification is Circle's code, not ours. Sub-cent **nanopayments** fit per-call supplier pricing exactly.
-Each agent's SCA wallet must be **deployed once** before it can receive/sign (§3.5).
+**`@circle-fin/x402-batching`** seller middleware — `gateway.require("$0.0xx")` per route — so payment
+verification is Circle's code, not ours. Each agent's SCA wallet must be **deployed once** before it can
+receive/sign (§3.5).
+
+**Operative money model (refined — see the CFO build spec):** the supplier sells **per-job research at
+fixed wholesale prices per depth** (it wraps the engine + Tavily/Nebius and absorbs within-tier difficulty
+variance). The Proprietor's **CFO buys wholesale and resells retail**; margin = retail − wholesale, and the
+CFO defends margin by repricing retail when it detects wholesale drift via `circle services inspect`. The
+sub-cent/few-cent payments are **nanopayments**. (Per-call nanopayments are a possible stretch, not the
+baseline.)
 
 ### 4.2 Fulfilment engine (the enrichment pipeline)
 
