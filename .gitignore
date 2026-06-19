@@ -1,0 +1,28 @@
+# Secrets — wallet keys, API keys (Circle / Tavily / Nebius) must never be committed
+.env
+.env.*
+*.pem
+*.key
+wallet.json
+secrets/
+
+# Dependencies
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+
+# Build / runtime
+dist/
+build/
+.cache/
+*.log
+
+# Local ledger / state (regenerated at runtime)
+data/ledger.db
+data/*.local.json
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
