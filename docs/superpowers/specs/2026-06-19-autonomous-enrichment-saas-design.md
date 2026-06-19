@@ -67,7 +67,7 @@ A small set of single-purpose units with clear interfaces:
 |---|---|---|
 | **Storefront** | The x402-protected HTTP endpoint, **listed on the Circle Agent Marketplace** so buyers can discover it. Publishes schema + price, issues `402`, verifies payment, returns brief + receipt. | Treasury, CFO, Fulfilment, Marketplace |
 | **CFO (pricing brain)** | Estimates COGS, sets/adjusts public price, enforces accept/decline + solvency policy. | Treasury, Ledger |
-| **Fulfilment engine** | Turns `{domain}` into a typed `CompanyProfile`: runs searches, structures with inference, reports actual COGS. | Supplier(s) |
+| **Fulfilment engine** | Turns a `company` into a typed `CompanyProfile`: disambiguation → depth-tiered research (Tavily search + Nebius synthesis) → cached result, reporting actual COGS. See §4.2. | Supplier(s) |
 | **Treasury (Circle adapter)** | Wraps the Circle Agent Wallet: balance, receive, send, list transactions. | Circle SDK / starter kit |
 | **Ledger** | Append-only record of every job: revenue, itemized COGS, tx hashes, margin, and the agent's reasoning. | — |
 | **Dashboard / CLI** | Read-only view of treasury, price history, and the ledger. The demo surface. | Ledger, Treasury |
@@ -93,6 +93,29 @@ suppliers in USDC" needs a deliberate design. Two options:
 Recommendation: **build the supplier-agent.** It is the single highest-leverage way to make the wallet
 load-bearing on *both* sides, and it doubles as a second demonstrable agent in the system.
 
+### 4.2 Fulfilment engine (the enrichment pipeline)
+
+The engine turns a `company` (name or domain) into a typed `CompanyProfile`. It is **tiered by depth**,
+because depth is what makes cost variable — and variable cost is what the CFO prices against.
+
+- **Disambiguation (free pre-step).** An ambiguous input ("Acme") resolves to a short list of candidate
+  companies the buyer can choose from *before paying*. This doubles as the discovery/preview beat.
+- **Depth tiers** — `basic | standard | comprehensive`:
+  - `basic` — a single pass over the core dimensions (company, product, funding, team). No web search. Cheapest.
+  - `standard` — adds live web search, a gap-identification step, and targeted follow-up queries.
+  - `comprehensive` — adds a final validation/correction pass over the assembled profile.
+- **Pipeline:** parallel domain researchers (funding · product · market · team) → web **search** (Tavily)
+  → **gap identification** → targeted follow-ups → an LLM **synthesiser** (Nebius) that extracts the
+  typed fields. Deterministic fields are pulled with cheap regex extraction; fuzzy fields go to the LLM.
+- **Caching:** every completed profile is cached. A repeat (or recently-cached) company is served from
+  cache at **~zero COGS** — the single biggest margin lever and the cleanest demo swing.
+- **Confidence:** each profile carries a `research_confidence` score, returned on the receipt.
+
+**Cost model:** `COGS ≈ Σ(Tavily searches) + Σ(Nebius calls)`, where both scale with depth and collapse
+to ~0 on a cache hit. The CFO's quote maps an offered price to the **deepest tier it can afford** at the
+target margin; an obscure company (more searches, more follow-ups) genuinely costs more, so the agent
+must price or scope to protect its margin.
+
 ## 5. Data flow (per request)
 
 1. Buyer-agent **discovers the service on the Circle Agent Marketplace** and reads its **schema + current price**.
@@ -107,13 +130,22 @@ load-bearing on *both* sides, and it doubles as a second demonstrable agent in t
 ## 6. Interfaces (sketch)
 
 ```
-GET  /v1/enrich/schema   -> { input: {domain}, output: CompanyProfile, price_usdc, terms }
-POST /v1/enrich          -> 402 Payment Required { price_usdc, pay_to, nonce }
-POST /v1/enrich (paid)   -> 200 { profile: CompanyProfile, receipt: Receipt }
+GET  /v1/enrich/schema    -> { input: {company, depth}, output: CompanyProfile, price_table, terms }
+POST /v1/preview          -> 200 { disambiguation_choices[] }          # free pre-purchase step
+POST /v1/enrich           -> 402 Payment Required { price_usdc, pay_to, nonce }
+POST /v1/enrich (paid)    -> 200 { profile: CompanyProfile, receipt: Receipt }
 
-CompanyProfile = { domain, name, industry, size, funding, key_people[], recent_news[], confidence }
-Receipt        = { job_id, revenue_usdc, cogs: LineItem[], margin_usdc, tx_hashes[], reasoning }
-LineItem       = { supplier, units, unit_price_usdc, amount_usdc, tx_hash }
+ResearchRequest = { company, depth: basic|standard|comprehensive, force_refresh }
+CompanyProfile  = {
+  company, confidence,
+  basics:  { stage, team_size, location, mission, culture_keywords[] },
+  product: { description, tech_stack[], target_market, recent_updates[] },
+  funding: { stage, latest_round, total_funding, investors[], runway_estimate },
+  hiring:  { open_roles[], departments_hiring[], engineering_culture, remote_policy },
+  news:    { summary, product_launches[], partnerships[], press_mentions[] }
+}
+Receipt  = { job_id, revenue_usdc, cogs: LineItem[], margin_usdc, depth_served, cache_hit, tx_hashes[], reasoning }
+LineItem = { supplier, units, unit_price_usdc, amount_usdc, tx_hash }
 ```
 
 ## 7. Pricing & solvency policy (the "mind")
