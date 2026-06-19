@@ -65,7 +65,7 @@ A small set of single-purpose units with clear interfaces:
 
 | Unit | Responsibility | Depends on |
 |---|---|---|
-| **Storefront** | The x402-protected HTTP endpoint. Publishes schema + price, issues `402`, verifies payment, returns brief + receipt. | Treasury, CFO, Fulfilment |
+| **Storefront** | The x402-protected HTTP endpoint, **listed on the Circle Agent Marketplace** so buyers can discover it. Publishes schema + price, issues `402`, verifies payment, returns brief + receipt. | Treasury, CFO, Fulfilment, Marketplace |
 | **CFO (pricing brain)** | Estimates COGS, sets/adjusts public price, enforces accept/decline + solvency policy. | Treasury, Ledger |
 | **Fulfilment engine** | Turns `{domain}` into a typed `CompanyProfile`: runs searches, structures with inference, reports actual COGS. | Supplier(s) |
 | **Treasury (Circle adapter)** | Wraps the Circle Agent Wallet: balance, receive, send, list transactions. | Circle SDK / starter kit |
@@ -95,7 +95,7 @@ load-bearing on *both* sides, and it doubles as a second demonstrable agent in t
 
 ## 5. Data flow (per request)
 
-1. Buyer-agent GETs the storefront's **schema + current price** (discovery).
+1. Buyer-agent **discovers the service on the Circle Agent Marketplace** and reads its **schema + current price**.
 2. Buyer POSTs `{ domain }` → storefront returns **`402 Payment Required`** (price, pay-to address, schema).
 3. Buyer **pays USDC** → revenue confirmed in the treasury.
 4. Storefront verifies payment, hands the job to the **CFO**.
@@ -123,6 +123,12 @@ LineItem       = { supplier, units, unit_price_usdc, amount_usdc, tx_hash }
   price by a step; if it sits well above and volume is healthy, lower by a step (bounded by floor/ceiling).
 - **Solvency rule:** if `balance < runway_floor`, accept only clearly-positive-EV jobs and pause
   discretionary spend.
+- **Approval rule:** spends below `approval_threshold` execute autonomously; a spend at or above it
+  **pauses for human approval before settling**. The threshold defaults high enough that ordinary
+  per-call COGS never trips it — so the agent stays fully autonomous in steady state and only escalates
+  anomalies (e.g. a single job whose estimated COGS is unusually large). This satisfies Circle's
+  "handle approval before spend" capability without diluting the autonomy thesis: autonomous by
+  default, supervised only at the tail.
 - Every decision writes a one-line **reason** to the ledger ("declined: obscure domain, est. COGS
   $0.18 > price $0.10"; "raised price $0.10 → $0.14: 3 of last 5 jobs below target margin").
 
@@ -166,7 +172,7 @@ LineItem       = { supplier, units, unit_price_usdc, amount_usdc, tx_hash }
 | Agent Nanopayments | ✅ | x402 per-call billing on the storefront + supplier |
 | Agent Stack starter kits | ✅ | wallet create/list, balances, payments |
 | Circle CLI | ✅ | wallet setup |
-| Circle Agent Marketplace | ◑ opportunity | could be the **discovery layer** — list the enrichment service and/or discover the supplier-agent here |
+| Circle Agent Marketplace | ✅ | the buyer's **discovery surface** — the enrichment service is listed here so buyer-agents find it, inspect its schema + price, and pay |
 | Circle Skills | ❓ verify | adopt if relevant once we read the starter-kit docs |
 
 **"What we're looking for" — bullets hit:** pays for data/inference/services · discovers + inspects
@@ -175,12 +181,13 @@ a marketplace that both **buys and sells** capabilities · pay-per-query data ag
 business workflow · wallet as payment identity + operating budget. The project spans **two** of
 Circle's own suggested ideas at once — _Developer API Monetization Agent_ and _Agent Expense Manager_.
 
-**Optional strengtheners (not required; cheap points):**
-1. **Circle Agent Marketplace** as the buyer's discovery surface (instead of a bare `GET /schema`).
-2. **Approval threshold:** fully autonomous below $X, escalate for human approval above it — ticks the
-   "handle approval before spend" capability *without* breaking the autonomy thesis (autonomous by
-   default, supervised only at the tail).
-3. Make the buyer-agent's **discover → inspect price → pay → receive** loop explicit and visible in the
+**Committed enhancements (folded into the design above):**
+1. **Circle Agent Marketplace** is the buyer's discovery surface (§4, §5) — not a bare `GET /schema`.
+2. **Approval threshold** (§7) — autonomous below `approval_threshold`, escalate above it; satisfies
+   "handle approval before spend" without breaking autonomy.
+
+**Still optional (nice-to-have):**
+3. Make the buyer-agent's **discover → inspect price → pay → receive** loop a visible beat in the live
    demo — it's exactly the flow the starter kit advertises.
 
 ## 10. Tech stack (proposed)

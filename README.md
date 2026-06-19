@@ -52,7 +52,7 @@ that money is *"the final tool every economic actor needs."* Proprietor makes th
                    └──────────────────────────────────────────────────┘
 ```
 
-1. A buyer-agent **discovers** the service and reads its published **schema + current price**.
+1. A buyer-agent **discovers** the service on the **Circle Agent Marketplace** and reads its published **schema + current price**.
 2. It POSTs a company domain; the API replies **`402 Payment Required`** with the price and pay-to address.
 3. The buyer **pays USDC** → revenue lands in the treasury.
 4. Proprietor decides the job is worth doing, **pays its own suppliers in USDC**, fulfills, and returns
@@ -69,8 +69,12 @@ Between jobs, the CFO watches the treasury and **adjusts the public price** to d
 | **Receive payment** | Customer revenue per enrichment (via x402). |
 | **Send payment** | Pays the supplier-agent in USDC per upstream call. |
 | **Agent Nanopayments / x402** | Per-call billing on the storefront endpoint. |
+| **Circle Agent Marketplace** | Discovery surface — Proprietor lists its enrichment service so buyer-agents find, inspect, and pay for it. |
 | **Transaction logs / receipts** | Every job's revenue + costs returned as on-chain receipts. |
 | **Circle CLI / starter kit** | Creates and manages the wallet at setup. |
+
+Spend is **policy-governed**: payments run autonomously below an approval threshold and escalate for
+human approval above it — autonomous by default, supervised only at the tail.
 
 ## The live demo (≈ 2–3 min)
 
