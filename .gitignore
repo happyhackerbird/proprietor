@@ -21,8 +21,10 @@ build/
 # Internal-only notes — references a private source project; never publish
 internal/
 
-# Local ledger / state (regenerated at runtime)
-data/ledger.db
+# Local ledger / cache / state (regenerated at runtime)
+data/*.db
+data/*.db-*
+data/*.sqlite*
 data/*.local.json
 
 # OS / editor
