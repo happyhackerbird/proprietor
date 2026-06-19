@@ -107,8 +107,8 @@ Validated against the live docs (`developers.circle.com/agent-stack`) and the cl
 **Spend controls**
 - Circle **Spending Policies** (native): transfer limits, recipient allowlists, contract blocklists,
   daily/monthly USDC caps — **and they apply to x402 payments**; sanctions screening runs on every
-  transfer. → our budget caps = Circle policies; our "approval threshold" = an **app-level gate** (like
-  the kit's `canUseTool` y/N prompt) layered on top.
+  transfer. **BUT policies are MAINNET-ONLY (§3.5.2)** → on the testnet demo the budget cap is enforced
+  **in the CFO's `canUseTool` gate**; real Circle policies attach on mainnet promotion.
 
 ### 3.5.1 Architecture decision forced by the above
 
@@ -119,7 +119,37 @@ The money layer is TypeScript; our fulfilment engine is Python. **Recommended �
   Node storefront calls. No crypto in Python.
 - Alternatives: **A)** all-TypeScript (port the engine to TS — clean single stack, more porting work);
   **C)** all-Python shelling out to the `circle` CLI for buyer ops and **hand-rolling** seller-side x402
-  verification (riskiest — re-implements SCA/EIP-1271 verification). **Confirm before we write the plan.**
+  verification (riskiest — re-implements SCA/EIP-1271 verification). **Adopted: Option B** — the Python
+  fulfilment engine is being built as a standalone `/enrich` service (see the engine build spec); the
+  money layer is TypeScript.
+
+### 3.5.2 Money-layer implementation specifics (validated 2026-06-20)
+
+- **Testnet IS fully viable (the key result).** The complete seller+buyer x402/Gateway **nanopayment**
+  loop — including **batched** nanopayments — runs on **Arc Testnet** (`ARC-TESTNET`, CAIP-2
+  `eip155:5042002`). Facilitator: **`https://gateway-api-testnet.circle.com`** (mainnet:
+  `https://gateway-api.circle.com`). No real money. Base Sepolia (`eip155:84532`) is an equal alternative.
+- **Caveat — the bundled kit is mainnet-only.** `circle-tools/chains.ts` hardcodes BASE/POLYGON mainnet;
+  we drive the **CLI** (`--testnet`) and the **`@circle-fin/x402-batching`** middleware (any
+  `facilitatorUrl` + CAIP-2 `networks`) directly, or extend `chains.ts`.
+- **Seller middleware:** `createGatewayMiddleware({ sellerAddress, facilitatorUrl, networks })` from
+  `@circle-fin/x402-batching/server`; price a route with `gateway.require("$0.001")`. After a 200 the
+  verified payment is on **`req.payment = { verified, payer, amount (atomic, ÷1e6), network,
+  transaction? }`**. **`req.payment.transaction` is the receipt tx hash** — *optional* under batched
+  settlement (may settle later), so guard for `undefined`.
+- **Buyer (CLI):** `circle services pay <url> --address <a> --chain ARC-TESTNET -X POST -d '<json>'
+  --max-amount <x> --output json` → `{ response: <upstream body>, payment: { amount, receipt } }`, where
+  `receipt` is base64 of the `x-payment-response` header decoding to `{"transaction":"0x…"}`. Always use
+  `--output json` (table mode hides the tx hash).
+- **Wallet deploy:** a wallet deploys via a **zero-value self-transfer** (`circle wallet transfer <addr>
+  --amount 0 --address <addr> --chain ARC-TESTNET`), **per chain**, then `eth_getCode` is non-empty.
+- **⚠️ Spending Policies are MAINNET-ONLY** (`circle wallet limit set …`; testnet errors "Spending
+  policies are mainnet-only"). → on the testnet demo, enforce the daily/per-tx **cap inside the CFO
+  agent's `canUseTool` gate** (track cumulative spend, deny over budget); attach real Circle policies on
+  mainnet promotion.
+- **CFO agent:** reuse the `claude-agent-sdk` kit pattern — `createSdkMcpServer({ name, tools })`, tools
+  via `tool(name, desc, zodSchema, handler)`, spend tools gated by `canUseTool`; reuse `circle_pay_service`
+  pointed at the supplier-agent's URL.
 
 ## 4. Architecture
 
@@ -231,8 +261,9 @@ LineItem = { supplier, units, unit_price_usdc, amount_usdc, tx_hash }
   discretionary spend.
 - **Spend controls — two layers (validated §3.5):**
   - *Hard caps via **Circle Spending Policies*** (native): daily/monthly USDC limits + a recipient
-    allowlist (supplier-agent only) — enforced on x402 payments by Circle itself. This is the real,
-    un-bypassable budget.
+    allowlist (supplier-agent only) — enforced on x402 payments by Circle itself. **Mainnet-only
+    (§3.5.2)**; on the testnet demo this cap is enforced in the `canUseTool` gate below and the Circle
+    policy attaches on mainnet promotion.
   - *Soft **approval gate** (app-level):* spends below `approval_threshold` execute autonomously; at or
     above it the agent **pauses for human approval** (an app-level `y/N` gate, like the kit's
     `canUseTool`). The threshold sits above ordinary per-call COGS, so the agent is autonomous in steady
@@ -244,7 +275,9 @@ LineItem = { supplier, units, unit_price_usdc, amount_usdc, tx_hash }
 
 - **Ledger:** append-only (SQLite or JSON). One row per job + one row per price change.
 - **Receipt:** returned to the buyer and stored — includes tx hashes so payments are independently
-  verifiable.
+  verifiable. Tx-hash source: seller-side `req.payment.transaction`; buyer-side the decoded
+  `payment.receipt` (`{"transaction":"0x…"}`). Both are **optional under batched settlement** — guard for
+  `undefined` and fall back to the payment proof / a "pending-batch" marker (§3.5.2).
 - **Dashboard:** minimal — treasury balance, price-over-time, and the job ledger. A CLI table is an
   acceptable fallback; a tiny web view is the stretch.
 
