@@ -59,6 +59,12 @@ The autonomous behaviors that fall out of this:
 3. **Solvency / throttling.** Track runway from the wallet balance. If runway is short, refuse
    negative-EV work and pause non-essential spend.
 
+**Pricing is tiered by depth (operative model).** Because the x402 middleware fixes a route's price before
+the handler sees the request, the buyer picks a depth tier and pays that tier's published price (not a
+per-company quote). Per-request margin still varies within a tier (an obscure company costs more); the CFO
+reprices tiers over time, and "decline" = marking a tier unavailable (4xx, no payable `402`). See the
+storefront build spec.
+
 ## 3.5 Circle Agent Stack — validated integration (ground truth, checked 2026-06-20)
 
 Validated against the live docs (`developers.circle.com/agent-stack`) and the cloned
