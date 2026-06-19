@@ -1,6 +1,7 @@
 # Secrets — wallet keys, API keys (Circle / Tavily / Nebius) must never be committed
 .env
 .env.*
+!.env.example
 *.pem
 *.key
 wallet.json
@@ -26,6 +27,9 @@ data/*.db
 data/*.db-*
 data/*.sqlite*
 data/*.local.json
+
+# Clippy run state (regenerated at runtime; clippy.config/ is committed)
+.clippy/
 
 # OS / editor
 .DS_Store
