@@ -179,19 +179,20 @@ npm run cfo:demo</pre>
     // Paste your demo video embed URL (YouTube /embed/<id> or Loom /embed/<id>). Leave "" to keep the placeholder.
     videoEmbedUrl: "",
 
-    // Block-explorer "view tx" base for Arc Testnet. VERIFY this resolves before relying on the links;
-    // leave "" to render hashes as plain text (no link).
+    // Block-explorer "view tx" base for Arc Testnet. Left "" on purpose: the settlement
+    // identifiers below are Gateway batched-nanopayment UUIDs, not 0x on-chain hashes, so a
+    // /tx/<id> link would 404 — they render as plain text (the honest representation).
     explorerTxBase: "",
-    // Block-explorer "view address" base. Leave "" to render addresses as plain text.
-    explorerAddrBase: "",
+    // Arc Testnet block explorer (Blockscout); verified /address/<addr> resolves.
+    explorerAddrBase: "https://testnet.arcscan.app/address/",
 
     // On-chain proof from a `npm run live-verify` run. Fill the hashes/addresses (testnet, public).
     proof: [
-      { lab: "Revenue tx (buyer → storefront)", val: "", kind: "tx" },
-      { lab: "Supplier tx (storefront → supplier)", val: "", kind: "tx" },
-      { lab: "Treasury wallet", val: "", kind: "addr" },
-      { lab: "Supplier wallet", val: "", kind: "addr" },
-      { lab: "Buyer wallet", val: "", kind: "addr" },
+      { lab: "Revenue tx (buyer → storefront)", val: "e5d56d63-9b00-45b7-bf90-f9d365b9b5b1", kind: "tx" },
+      { lab: "Supplier tx (storefront → supplier)", val: "8c6b533f-79a4-4133-88ee-0a570f676a9d", kind: "tx" },
+      { lab: "Treasury wallet", val: "0x5d954ade327ff62cf2644899e43fc790fb7ad795", kind: "addr" },
+      { lab: "Supplier wallet", val: "0x01602bcd81c540e37c1fa8c7af5a9b6e123b9522", kind: "addr" },
+      { lab: "Buyer wallet", val: "0x8584ddb57ebe0e94598c0a26552ce55d13b2f0d6", kind: "addr" },
     ],
 
     // Fallback price table if the live fetch fails (kept in sync with .env).
