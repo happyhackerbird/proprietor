@@ -21,10 +21,34 @@ function parseOrder(raw: string | undefined): Order {
   return { order_id: o.order_id, company: o.company, depth: o.depth!, retail_paid_usdc: o.retail_paid_usdc };
 }
 
+const USAGE = [
+  "Usage: npm run cfo -- '<order JSON>'",
+  "",
+  "Example:",
+  `  npm run cfo -- '{"order_id":"o1","company":"stripe.com","depth":"standard","retail_paid_usdc":0.03}'`,
+  "",
+  "The CFO inspects and pays the supplier, so the engine + supplier must be running.",
+  "To see every decision branch (allow / budget-deny / approval-deny / reprice), run:",
+  "  npm run cfo:demo",
+].join("\n");
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const raw = process.argv[2];
+  if (!raw) {
+    // No order given — print usage cleanly (no stack trace) and exit success.
+    console.log(USAGE);
+    process.exit(0);
+  }
+  let order: Order;
+  try {
+    order = parseOrder(raw);
+  } catch (err) {
+    console.error(`[cfo] ${err instanceof Error ? err.message : String(err)}\n`);
+    console.error(USAGE);
+    process.exit(1);
+  }
   const ledgerPath = process.env.CFO_LEDGER_PATH ?? "data/cfo-ledger.db";
   const ledger = new Ledger(ledgerPath);
-  const order = parseOrder(process.argv[2]);
   runCfoAgent(order, { ledger })
     .then((receipt) => {
       if (receipt) {
