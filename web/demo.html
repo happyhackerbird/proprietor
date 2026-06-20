@@ -395,7 +395,110 @@
     </div>
   </section>
 
+  <!-- HOW WE USE EACH TECH — ELI5 + which button -->
+  <section class="card" style="margin-top:14px">
+    <h2>How we use each tech <span class="hint">click a chip up top, or skim below — like for a 5-year-old</span></h2>
+    <div class="grid cols-3 techgrid">
+
+      <div class="techbox" id="tech-circle">
+        <div class="tlogo">🏦</div>
+        <h3>Circle Agent Wallet</h3>
+        <p class="eli">It's the <b>piggy bank</b> the robot owns. Circle holds the keys safe; the robot just asks "send 0.02 USDC to that other robot" and Circle does it.</p>
+        <div class="bttn">When we touch the button</div>
+        <ul class="usage">
+          <li><b>At setup</b> — <code>circle wallets deploy</code> creates the treasury, supplier, and buyer SCAs (one-time, via <code>npm run deploy:wallets</code>).</li>
+          <li><b>Before every quote</b> — read <code>balance</code> so the CFO knows how much room it has.</li>
+          <li><b>After every paid job</b> — sign a USDC transfer to the supplier wallet.</li>
+          <li><b>Where in code</b> — <code>money/treasury.ts</code> wraps the SDK; <code>cfo/circle-tools.ts</code> exposes it to the agent.</li>
+        </ul>
+      </div>
+
+      <div class="techbox" id="tech-x402">
+        <div class="tlogo">🪙</div>
+        <h3>x402 nanopayments</h3>
+        <p class="eli">It's the <b>price tag glued to the door</b>. The shop replies <code>402 Payment Required</code> with the price. The customer reads it, pays, comes back. No accounts.</p>
+        <div class="bttn">When we touch the button</div>
+        <ul class="usage">
+          <li><b>On the seller side</b> — <code>@circle-fin/x402-batching</code> wraps our Express app and turns each route into a paid endpoint at a price.</li>
+          <li><b>On the buyer side</b> — <code>circle services pay &lt;url&gt;</code> in the CLI sees the <code>402</code>, pays USDC, retries with the payment proof header.</li>
+          <li><b>Where in code</b> — <code>money/x402-seller.ts</code> (factory), <code>storefront/server.ts</code> (mounts paid routes per depth tier).</li>
+          <li><b>Why batching</b> — Circle Gateway settles many x402 calls in one on-chain batch; receipts may briefly say <code>pending-batch</code>.</li>
+        </ul>
+      </div>
+
+      <div class="techbox" id="tech-usdc">
+        <div class="tlogo">💵</div>
+        <h3>USDC on Arc Testnet</h3>
+        <p class="eli">It's the <b>actual money</b> in the piggy bank. One USDC ≈ one dollar. Arc is Circle's pretend-money playground so we don't risk real cash on stage.</p>
+        <div class="bttn">When we touch the button</div>
+        <ul class="usage">
+          <li><b>At startup</b> — <code>live-verify.sh</code> tops up Gateway balances with <code>circle gateway deposit</code> so payers can settle.</li>
+          <li><b>On every transfer</b> — amounts flow as USDC, never raw ETH/gas tokens.</li>
+          <li><b>In receipts</b> — every value is <code>*_usdc</code>; tx hashes resolve on Arc's explorer.</li>
+          <li><b>Why testnet</b> — same protocol as mainnet, no real funds at risk during the demo.</li>
+        </ul>
+      </div>
+
+      <div class="techbox" id="tech-claude">
+        <div class="tlogo">🧠</div>
+        <h3>Claude Agent SDK (the CFO)</h3>
+        <p class="eli">It's the <b>shop's brain</b>. A robot that reads, thinks, and decides — but it can only press the buttons we let it press.</p>
+        <div class="bttn">When we touch the button</div>
+        <ul class="usage">
+          <li><b>Per order</b> — <code>runCfoAgent({order})</code> spins up an agent with a tiny tool set: <code>read_balance</code>, <code>inspect_supplier</code>, <code>pay_supplier</code>, <code>reprice</code>, <code>decline</code>.</li>
+          <li><b>Reasoning</b> — the LLM proposes a decision and a one-sentence reason; the reason is written to the ledger so judges can audit "why did it pay?".</li>
+          <li><b>Safety</b> — every tool call goes through <code>cfo/gate.ts</code> first. Even if the LLM hallucinates, the gate is the wall that stops bad payments.</li>
+          <li><b>Where in code</b> — <code>cfo/agent.ts</code> (loop), <code>cfo/main.ts</code> (entry: <code>npm run cfo</code>).</li>
+        </ul>
+      </div>
+
+      <div class="techbox" id="tech-tavily">
+        <div class="tlogo">🔎</div>
+        <h3>Tavily search</h3>
+        <p class="eli">It's the shop's <b>librarian</b>. When a customer asks about a company, the engine asks Tavily to fetch fresh pages from the web.</p>
+        <div class="bttn">When we touch the button</div>
+        <ul class="usage">
+          <li><b>Per enrichment</b> — the engine calls Tavily's search API to gather sources about the company.</li>
+          <li><b>Cost-aware</b> — every Tavily call is counted in the engine's <code>CostMeter</code>; the count becomes the wholesale price the supplier charges.</li>
+          <li><b>Tiered</b> — <code>basic</code> depth makes a few queries, <code>comprehensive</code> makes many. More searches = better profile = higher cost.</li>
+          <li><b>Where in code</b> — engine pipeline in <code>engine/app/</code>.</li>
+        </ul>
+      </div>
+
+      <div class="techbox" id="tech-nebius">
+        <div class="tlogo">⚙️</div>
+        <h3>Nebius TokenFactory</h3>
+        <p class="eli">It's the shop's <b>summary writer</b>. After Tavily fetches raw pages, Nebius runs an LLM that turns them into a clean, structured profile.</p>
+        <div class="bttn">When we touch the button</div>
+        <ul class="usage">
+          <li><b>Per enrichment</b> — engine calls Nebius for two jobs: fast extraction (small model) and synthesis + validation (larger model).</li>
+          <li><b>Cost-aware</b> — input/output tokens roll into the engine's <code>CostBreakdown</code>; the storefront uses that to price each tier.</li>
+          <li><b>Why Nebius</b> — OpenAI-compatible API + competitive USD/token, so the agent's cost-of-goods is predictable.</li>
+          <li><b>Where in code</b> — Nebius client wired via <code>NEBIUS_BASE_URL</code> + <code>NEBIUS_MODEL</code> envs.</li>
+        </ul>
+      </div>
+
+    </div>
+    <div class="legend" style="margin-top:10px">
+      Hidden plumbing: <b>FastAPI</b> serves the engine, <b>Express</b> serves storefront + supplier, <b>SQLite</b> stores both the engine cache and the CFO ledger. Tests run with <b>Vitest</b> (TS) and <b>pytest</b> (Python).
+    </div>
+  </section>
+
   <style>
+    .chip.clickable{cursor:pointer;transition:transform .15s,border-color .15s}
+    .chip.clickable:hover{transform:translateY(-1px);border-color:var(--acc);color:var(--ink)}
+    .techgrid{gap:12px}
+    .techbox{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;scroll-margin-top:20px}
+    .techbox.flash{animation:flash 1.4s ease}
+    @keyframes flash{0%{border-color:var(--acc);box-shadow:0 0 0 4px rgba(94,234,212,.2)}100%{border-color:var(--line);box-shadow:0 0 0 0 rgba(94,234,212,0)}}
+    .techbox .tlogo{font-size:24px}
+    .techbox h3{margin:0;font-size:14px;color:#fff;letter-spacing:-.01em}
+    .techbox .eli{margin:0;color:#cfeae5;font-size:13px;background:linear-gradient(180deg,#0f201d,#0e1117);border:1px solid #1e4a44;border-radius:8px;padding:9px 11px}
+    .techbox .eli b{color:var(--acc)}
+    .techbox .bttn{font:700 10px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--acc2);margin-top:4px}
+    .techbox ul.usage{margin:0;padding-left:18px;color:#cfdbea;font-size:12.5px;line-height:1.55}
+    .techbox ul.usage li{margin-bottom:4px}
+    .techbox code{font-family:var(--mono);color:var(--acc);font-size:11.5px;background:#0a1018;border:1px solid var(--line);border-radius:5px;padding:1px 5px}
     .cfo-tree{display:flex;flex-direction:column;align-items:stretch;gap:6px}
     .cfo-node{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
     .cfo-node.start{border-color:var(--acc)}
@@ -1023,6 +1126,15 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowLeft' && scene > 1) { scene--; renderScene(); }
 });
 $("#storyModal").addEventListener('click', (e) => { if (e.target.id === 'storyModal') closeStory(); });
+
+// ─── tech chip → scroll to its explainer card ────────────────────────────────
+$$('.chip.clickable').forEach(chip => chip.addEventListener('click', () => {
+  const key = chip.dataset.tech;
+  const target = document.getElementById('tech-' + key);
+  if (!target) return;
+  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  target.classList.remove('flash'); void target.offsetWidth; target.classList.add('flash');
+}));
 
 // ─── info modal (field tooltips) ─────────────────────────────────────────────
 function openInfo(title, body){
