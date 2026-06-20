@@ -33,33 +33,36 @@ that money is *"the final tool every economic actor needs."* Proprietor makes th
 ## How it works (the loop)
 
 ```
-  customer-agent
-       │  1. GET /v1/enrich/schema           → price + terms
-       │  2. POST /v1/enrich/{depth}         → 402 Payment Required
-       │  3. pay RETAIL in USDC (x402)
-       ▼
-  ── PROPRIETOR  (all our code) ──────────────────────────────────────
-       Storefront (x402)  ──▶  CFO agent  (Claude reasons)
-         collects retail        balance → budget gate → decide
-                                      │
-                                      │  4. pay WHOLESALE in USDC (x402)
-                                      ▼
-                               Supplier-agent  (sells research per depth)
-                                      │
-                                      │  5. HTTP call (no money)
-                                      ▼
-                               Fulfilment engine
-                                 = Tavily (search) + Nebius (inference)
-                                      │
-                                      ▼
-                               CompanyProfile
-  ────────────────────────────────────────────────────────────────────
-       ▲
-       │  6. brief + receipt   (revenue − wholesale = margin, tx hashes)
-  customer-agent
+  ┌──────────────────────────────────────────────┐
+  │ customer-agent  (buyer)                      │
+  └──────────────────────────────────────────────┘
+                          │  1. pay RETAIL    (USDC · x402)
+                          ▼
+  ┌──────────────────────────────────────────────┐
+  │ PROPRIETOR  —  Storefront (x402)             │
+  │   →  CFO agent (Claude):                     │
+  │       balance → budget gate → decide         │
+  └──────────────────────────────────────────────┘
+                          │  2. pay WHOLESALE   (USDC · x402)
+                          ▼
+  ┌──────────────────────────────────────────────┐
+  │ Supplier-agent  (sells research per depth)   │
+  └──────────────────────────────────────────────┘
+                          │  3. HTTP call   (no money)
+                          ▼
+  ┌──────────────────────────────────────────────┐
+  │ Fulfilment engine                            │
+  │   =  Tavily (search) + Nebius (inference)    │
+  └──────────────────────────────────────────────┘
+                          │  4. CompanyProfile  →  receipt
+                          ▼
+  ┌──────────────────────────────────────────────┐
+  │ receipt → customer-agent                     │
+  │ revenue − wholesale = margin · tx hashes     │
+  └──────────────────────────────────────────────┘
 
-  Money crosses ONE boundary: CFO → Supplier (USDC, x402); the research happens behind it
-  (Supplier → Engine, HTTP).   Claude = reasoning · Tavily = search · Nebius = inference.
+  Money crosses ONE hop — CFO → Supplier (USDC on Arc Testnet); the research happens
+  behind it (Supplier → Engine, HTTP).   Claude = reasoning · Tavily = search · Nebius = inference.
 ```
 
 1. A buyer-agent inspects the storefront's **price + schema** (`GET /v1/enrich/schema`) and POSTs a company; unpaid → **`402 Payment Required`**.
