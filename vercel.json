@@ -1,0 +1,20 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "outputDirectory": "web",
+  "buildCommand": "echo 'static site — nothing to build'",
+  "installCommand": "echo 'static site — skipping install'",
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/v1/enrich/schema", "destination": "/v1/enrich/schema.json" }
+  ],
+  "headers": [
+    {
+      "source": "/v1/enrich/schema.json",
+      "headers": [
+        { "key": "content-type", "value": "application/json; charset=utf-8" },
+        { "key": "access-control-allow-origin", "value": "*" }
+      ]
+    }
+  ]
+}
