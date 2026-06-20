@@ -107,6 +107,92 @@
   .arrow{font-size:24px;color:var(--mut);animation:slideX 1.2s infinite}
   @keyframes slideX{0%,100%{transform:translateX(0)}50%{transform:translateX(8px)}}
   .box{padding:10px 12px;border:1px dashed var(--line);border-radius:8px;color:var(--mut);font:600 11px/1.2 var(--sans);text-align:center;min-width:80px}
+
+  /* hero CTA */
+  .hero-cta{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .cta-big{font:700 14px/1 var(--sans);padding:13px 18px;border-radius:10px;border:0;cursor:pointer;
+    background:linear-gradient(90deg,var(--acc),var(--acc2));color:#04201b;display:inline-flex;align-items:center;gap:8px}
+  .cta-big:hover{transform:translateY(-1px)}
+  .cta-ghost{font:700 14px/1 var(--sans);padding:13px 18px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+
+  /* problem / circle cards */
+  .problem{background:linear-gradient(180deg,#1f1a10,#0e1117);border:1px solid #4a3a1f}
+  .problem b{color:var(--warn)}
+  .solving{background:linear-gradient(180deg,#101e1d,#0e1117);border:1px solid #1e4a44}
+  .solving b{color:var(--acc)}
+  .circle{background:linear-gradient(180deg,#0f1828,#0e1117);border:1px solid #1f3450}
+  .circle b{color:var(--acc2)}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:760px){.twocol{grid-template-columns:1fr}}
+  .pillrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+
+  /* modal */
+  .modal{position:fixed;inset:0;background:rgba(4,8,14,.7);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+  .modal.open{display:flex}
+  .modal .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;max-width:780px;width:100%;max-height:92vh;display:flex;flex-direction:column;overflow:hidden}
+  .modal header{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .modal header h3{margin:0;font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--mut)}
+  .modal .body{padding:22px 24px;flex:1;overflow:auto;min-height:340px;display:flex;flex-direction:column}
+  .modal .close{font-size:22px;line-height:1;background:none;border:0;color:var(--mut);cursor:pointer;padding:4px 10px}
+  .modal .close:hover{color:var(--ink)}
+  .modal .nav{padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .stepdots{display:flex;gap:6px}
+  .stepdots span{width:7px;height:7px;border-radius:50%;background:var(--line)}
+  .stepdots span.on{background:var(--acc);transform:scale(1.3)}
+
+  /* scenes */
+  .scene{display:none;flex:1;flex-direction:column;justify-content:space-between;gap:14px}
+  .scene.on{display:flex;animation:fadein .35s ease}
+  @keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .scene h4{margin:0 0 4px;font-size:20px;color:#fff;letter-spacing:-.01em}
+  .scene p{margin:0;color:#cfdbea;font-size:15px}
+  .scene .stage{flex:1;min-height:200px;display:flex;align-items:center;justify-content:center;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:20px;position:relative;overflow:hidden}
+
+  /* scene 1 — lonely robot */
+  .robot{width:90px;height:110px;display:flex;flex-direction:column;align-items:center;color:var(--ink);font:800 11px/1 var(--mono)}
+  .robot .head{width:60px;height:50px;background:#2a3445;border:2px solid #4a5570;border-radius:10px;display:flex;justify-content:center;align-items:center;gap:8px;position:relative}
+  .robot .eye{width:9px;height:9px;border-radius:50%;background:var(--acc);box-shadow:0 0 8px var(--acc);animation:blink 3s infinite}
+  @keyframes blink{0%,90%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+  .robot .body{width:74px;height:48px;background:#1a2230;border:2px solid #4a5570;border-top:0;border-radius:0 0 8px 8px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--mut)}
+  .robot.sad .eye{background:var(--bad);box-shadow:0 0 8px var(--bad)}
+  .robot.happy .eye{background:var(--good);box-shadow:0 0 8px var(--good)}
+
+  /* scene 2 — coins flying */
+  .coinflow{display:flex;align-items:center;gap:22px}
+  .coinflow .step{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .coinflow .step span{font:600 11px/1 var(--mono);color:var(--mut)}
+  .fly{animation:fly 1.4s infinite ease-in-out}
+  @keyframes fly{0%,100%{transform:translateX(-10px)}50%{transform:translateX(10px)}}
+  .coin-sm{width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#a7f3d0,#0f766e);box-shadow:0 0 12px rgba(94,234,212,.4);position:relative}
+  .coin-sm::after{content:"$";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#04201b;font:900 14px/1 var(--mono)}
+
+  /* scene 3 — rulebook */
+  .rulebook{background:#0a1018;border:1px solid var(--line);border-radius:10px;padding:14px 18px;color:#cdd8e6;font-size:13px;min-width:280px}
+  .rulebook h5{margin:0 0 6px;font:700 11px/1 var(--sans);color:var(--acc);text-transform:uppercase;letter-spacing:.06em}
+  .rulebook code{font-family:var(--mono);color:var(--acc2)}
+
+  /* scene 4 — price tag flipping */
+  .pricetag{width:140px;padding:14px;border-radius:12px;background:#0a1018;border:1px dashed var(--acc);color:var(--ink);text-align:center;transition:all .4s ease;font-family:var(--mono)}
+  .pricetag .lbl{font:700 10px/1 var(--sans);color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+  .pricetag .val{font-size:24px;font-weight:900;color:var(--acc)}
+  .arrowbig{font-size:24px;color:var(--warn);animation:slideX 1.2s infinite}
+
+  /* scene 5 — receipt */
+  .receipt-mini{background:#0a1018;border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:280px;font-family:var(--mono);font-size:12px;color:#cdd8e6;line-height:1.7}
+  .receipt-mini .h{font-family:var(--sans);font:700 11px/1 var(--sans);color:var(--acc);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+  .receipt-mini .ln{display:flex;justify-content:space-between;gap:14px}
+  .receipt-mini .good{color:var(--good)}
+
+  /* scene 6 — why this matters */
+  .why-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+  @media(max-width:600px){.why-grid{grid-template-columns:1fr}}
+  .why-grid .card-mini{background:#0a1018;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .why-grid .card-mini h5{margin:0 0 6px;font:700 11px/1 var(--sans);color:var(--acc);text-transform:uppercase;letter-spacing:.06em}
+  .why-grid .card-mini p{font-size:13px;color:#cdd8e6;margin:0}
+
+  /* tiny info button next to field names */
+  .ibtn{background:none;border:0;color:var(--acc);cursor:pointer;font:700 10px/1 var(--sans);margin-left:6px;padding:2px 6px;border:1px solid var(--line);border-radius:6px}
+  .ibtn:hover{background:var(--panel2)}
 </style>
 </head>
 <body>
@@ -128,10 +214,25 @@
     </div>
   </header>
 
+  <!-- HERO CTA -->
+  <section class="card" style="margin-top:14px;background:linear-gradient(180deg,#0e2422,#0e1117);border-color:#1e4a44">
+    <h2 style="font-size:13px">Start here <span class="hint">never seen this before? read in 60 seconds</span></h2>
+    <p class="lead" style="margin:0 0 6px;font-size:16px;color:#e7f2f0">
+      Today, <b>only humans</b> can pay for APIs — you need a credit card, an email, an account.
+      AIs ("agents") can't do any of that. So agents can't really buy or sell.
+      <b style="color:var(--acc)">Proprietor is a tiny shop run by an AI</b> that earns and spends digital dollars (USDC) all by itself — proving agents can actually do commerce.
+    </p>
+    <div class="hero-cta">
+      <button class="cta-big" id="btnStory">▶ Watch the 6-scene story</button>
+      <button class="cta-ghost" id="btnWhyProblem">What problem are we solving?</button>
+      <button class="cta-ghost" id="btnWhyCircle">Why this matters for Circle</button>
+    </div>
+  </section>
+
   <!-- ELI5 -->
-  <section class="grid cols-2">
+  <section class="grid cols-2" style="margin-top:14px">
     <div class="card eli5">
-      <h2>Explain like I'm 5 <span class="hint">why this matters</span></h2>
+      <h2>Explain like I'm 5 <span class="hint">the whole loop</span></h2>
       <p>Imagine a <b>robot shopkeeper</b>. It has a piggy bank full of digital dollars (USDC). When you ask it a question about a company, it:</p>
       <ul>
         <li>1. Tells you the <b>price</b> first.</li>
@@ -157,6 +258,59 @@
         <div class="box">Supplier</div>
       </div>
       <div class="legend" style="text-align:center;margin-top:4px">Every arrow = one on-chain USDC transfer · the receipt records both tx hashes.</div>
+    </div>
+  </section>
+
+  <!-- PROBLEM / WHY CIRCLE -->
+  <section class="twocol" style="margin-top:14px">
+    <div class="card problem">
+      <h2>The problem <span class="hint">why agents can't do commerce yet</span></h2>
+      <ul style="margin:0;padding-left:18px;color:#f4e3c4">
+        <li>APIs charge by <b>monthly subscription</b>, not per request — bad fit for an agent that makes 4 calls a day.</li>
+        <li>Sign-up needs an <b>email, a card, a billing address</b> — an AI has none.</li>
+        <li>An agent can't <b>spend money it doesn't have authority over</b>; without a wallet it asks a human, and the human becomes the bottleneck.</li>
+        <li>There's no shared way for an agent to <b>discover a price</b> on the wire and decide if the trade is worth it.</li>
+      </ul>
+      <p style="margin:10px 0 0;color:#f4e3c4">Result: the agent economy is stuck. Agents can <i>think</i> but they can't <i>transact</i>.</p>
+    </div>
+
+    <div class="card solving">
+      <h2>What we're solving <span class="hint">the missing rails</span></h2>
+      <ul style="margin:0;padding-left:18px;color:#cfeae5">
+        <li><b>Per-call price discovery</b> — <code>402 Payment Required</code> over HTTP (x402): the server itself quotes the price.</li>
+        <li><b>Programmable money</b> — Circle Agent Wallet so the AI <i>is</i> the account, not a human under it.</li>
+        <li><b>Two-sided commerce</b> — the agent earns AND spends, end-to-end, no human in the middle.</li>
+        <li><b>Receipts on-chain</b> — every job lands a tx hash; books reconcile themselves.</li>
+        <li><b>Autonomous pricing</b> — the CFO loop reprices when costs rise, so the business stays solvent.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="card circle" style="margin-top:14px">
+    <h2>Why this matters for Circle <span class="hint">and Circle's customers</span></h2>
+    <div class="grid cols-3">
+      <div>
+        <div class="legend" style="margin-bottom:6px;color:var(--acc2)">For Circle</div>
+        <p style="margin:0;color:#cfdbea">
+          Circle wants USDC to be <b>the unit of account on the agent web</b>. Proprietor is the canonical proof: a single agent runs a profitable business
+          end-to-end on Circle's stack — <b>Agent Wallet</b> + <b>x402 batched settlement</b> + <b>Arc Testnet</b> + <b>Marketplace inspect</b>. If this works, every API on the
+          internet can become payable by AIs without giving up custody to a card processor.
+        </p>
+      </div>
+      <div>
+        <div class="legend" style="margin-bottom:6px;color:var(--acc2)">For buyer-agents</div>
+        <p style="margin:0;color:#cfdbea">
+          No accounts. No keys. No invoices. <b>Discover a price, pay, get the answer</b> — like dropping a coin in a vending machine.
+          Costs scale with what you actually use, and the price you see <i>is</i> the price you pay.
+        </p>
+      </div>
+      <div>
+        <div class="legend" style="margin-bottom:6px;color:var(--acc2)">For sellers / app builders</div>
+        <p style="margin:0;color:#cfdbea">
+          Charge per request. <b>No chargebacks</b>, no card-processor cut, no subscription billing code. Settlement in USDC, batched and on-chain.
+          Your API becomes addressable by every agent on the network — not just humans willing to enter a credit card.
+        </p>
+      </div>
     </div>
   </section>
 
@@ -287,8 +441,221 @@
     </div>
   </section>
 
+  <!-- FAQ — questions judges will probably ask -->
+  <section class="card" style="margin-top:14px">
+    <h2>FAQ <span class="hint">tech · practical · cybersecurity</span></h2>
+    <div class="grid cols-3">
+
+      <!-- TECH -->
+      <div>
+        <div class="legend" style="margin-bottom:8px;color:var(--acc)">Tech &amp; architecture</div>
+        <details><summary>What exactly is x402?</summary>
+          <p>An HTTP-native payment scheme. The server replies <code>402 Payment Required</code> with the price, the chain, and the seller address. The client pays, retries with a payment proof header, and the server fulfils. We use <code>@circle-fin/x402-batching</code> on the server and Circle CLI as the client.</p></details>
+        <details><summary>Which chain &amp; why?</summary>
+          <p><b>Arc Testnet</b> — Circle's EVM-compatible chain optimized for stablecoin settlement. Sub-second finality, USDC-native. We never touch mainnet money in the demo.</p></details>
+        <details><summary>Is the agent really autonomous?</summary>
+          <p>Yes within a budget. The CFO is a Claude Agent SDK loop that reads the budget rulebook, inspects the supplier price, and decides allow / deny / reprice. Above an approval threshold it escalates — autonomous by default, supervised only at the tail.</p></details>
+        <details><summary>What's the LLM/research stack?</summary>
+          <p><b>Tavily</b> for web search, <b>Nebius TokenFactory</b> for LLM inference (extract + synthesise), <b>FastAPI</b> for the engine, <b>Express</b> for the storefront, <b>TS + Vitest</b> for the money layer, <b>uv/pytest</b> for the engine tests.</p></details>
+        <details><summary>How are receipts verifiable?</summary>
+          <p>Each receipt contains <code>revenue_tx_hash</code> and <code>supplier_tx_hash</code>. Anyone can look them up on Arc Testnet's explorer to confirm the two-sided settlement.</p></details>
+        <details><summary>What happens if the engine fails mid-job?</summary>
+          <p>x402 is <b>decline-before-charge</b>: unavailable depths return <code>409</code> (not a payable <code>402</code>). If fulfilment fails after a charge, the receipt records the failure and the agent flags it for the ledger.</p></details>
+        <details><summary>Does this scale beyond a demo?</summary>
+          <p>The bottleneck is settlement latency, not protocol. Circle Gateway batches x402 payments so we can pipeline many concurrent buyers. Engine is stateless behind a SQLite cache keyed on <code>(company, depth)</code>.</p></details>
+      </div>
+
+      <!-- PRACTICAL -->
+      <div>
+        <div class="legend" style="margin-bottom:8px;color:var(--acc)">Practical / business</div>
+        <details><summary>Why would anyone use this instead of Stripe?</summary>
+          <p>Stripe requires a human with a card. This works for <i>agent-to-agent</i> trade where neither side is a human. No accounts, no KYC dance, no minimums, pay-per-call from $0.001 up.</p></details>
+        <details><summary>What's the unit economics?</summary>
+          <p>Per job: revenue (e.g. 0.03 USDC) − wholesale paid to supplier (e.g. 0.018 USDC) = margin. The CFO targets a minimum margin; if reality drifts below it the agent reprices on its own.</p></details>
+        <details><summary>How does the agent <i>decide</i> the price?</summary>
+          <p>It reads recent ledger margins, the supplier's current quote, and an elasticity heuristic. Above an autonomous threshold it escalates. Pricing logic lives in <code>cfo/repricer.ts</code> and is unit-tested.</p></details>
+        <details><summary>Could a buyer-agent get stuck in a fee loop?</summary>
+          <p>No — buyer sets <code>--max-amount</code> on every <code>circle services pay</code>. If the storefront quotes above that, the pay fails fast with no funds moved.</p></details>
+        <details><summary>Who pays gas?</summary>
+          <p>On Arc Testnet, payers cover their own gas. Circle Gateway batches settlement to amortise fees across multiple x402 calls. Receipts may briefly say <code>pending-batch</code>.</p></details>
+        <details><summary>What's the demo failure mode you're most worried about?</summary>
+          <p>Live external APIs (Tavily/Nebius) flaking on stage. Mitigation: a free <i>/preview</i> path that doesn't move money, and a recorded fallback of the paid run with real on-chain hashes.</p></details>
+        <details><summary>Can humans still take over?</summary>
+          <p>Yes. Spend above the approval threshold escalates to a human-in-the-loop step. The budget rulebook is the only thing standing between autonomous and supervised mode.</p></details>
+      </div>
+
+      <!-- SECURITY -->
+      <div>
+        <div class="legend" style="margin-bottom:8px;color:var(--bad)">Cybersecurity</div>
+        <details><summary>Could the agent be prompt-injected into draining the treasury?</summary>
+          <p>The CFO never executes free-form prompts as payment instructions. Spend is gated by <code>cfo/gate.ts</code>: every payment must pass <i>max-wholesale</i>, <i>min-margin</i>, and <i>per-job</i> caps regardless of what the LLM "decides". The Agent SDK can only call a narrow tool surface — there is no "transfer arbitrary USDC" tool.</p></details>
+        <details><summary>What if a supplier overcharges?</summary>
+          <p>Buyer-side: storefront calls supplier with a <code>--max-amount</code> derived from the budget. If the supplier quotes higher, the call fails before any settlement. The decline is logged to the ledger.</p></details>
+        <details><summary>What about replay attacks on x402?</summary>
+          <p>x402 payment proofs are bound to a request hash + nonce and verified by the facilitator. The storefront rejects duplicate proofs; the chain rejects duplicate txs.</p></details>
+        <details><summary>Where do private keys live?</summary>
+          <p>The Circle Agent Wallet is custodial via Circle — we never see raw private keys. Auth is via Circle CLI session tokens, kept out of the repo (<code>.env</code> is git-ignored).</p></details>
+        <details><summary>Is the storefront DOS-resistant?</summary>
+          <p>Free routes (<code>/healthz</code>, <code>/v1/preview</code>) are cheap and rate-limit-friendly. Paid routes are inherently rate-limited by the cost-to-call — flooding 402s costs the attacker USDC. <i>Pay to spam</i> is the natural defence.</p></details>
+        <details><summary>What if the LLM hallucinates a profile?</summary>
+          <p>The engine has a validation pass at the deepest tier and a deterministic-fields-by-regex extractor; fuzzy fields carry a confidence flag. The buyer sees both the profile and the cost breakdown to judge value.</p></details>
+        <details><summary>Could a malicious buyer submit a poisoned company name?</summary>
+          <p>All input is parsed as a domain string before reaching the engine; the engine sandboxes any URL fetch (timeouts, allow-listed schemes, no follow into private IP ranges).</p></details>
+        <details><summary>Are receipts tamper-proof?</summary>
+          <p>The receipt JSON is server-generated and the on-chain tx hashes are independently verifiable. Tampering changes the hash but not the chain — anyone can re-verify.</p></details>
+        <details><summary>What about supply-chain attacks on the agent's deps?</summary>
+          <p>Honest answer: this is a hackathon repo — deps are <code>npm install</code>'d at known versions but not yet pinned via lockfile audit. Production hardening would add <code>npm audit signatures</code> + reproducible builds.</p></details>
+      </div>
+    </div>
+    <style>
+      details{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 12px;margin-bottom:6px}
+      details[open]{border-color:var(--acc)}
+      summary{cursor:pointer;font:600 12.5px/1.3 var(--sans);color:var(--ink);list-style:none}
+      summary::-webkit-details-marker{display:none}
+      summary::before{content:"▸ ";color:var(--acc);font-weight:700}
+      details[open] summary::before{content:"▾ "}
+      details p{margin:8px 0 2px;color:#cfdbea;font-size:12.5px;line-height:1.55}
+      details code{font-family:var(--mono);color:var(--acc2);font-size:11.5px}
+    </style>
+  </section>
+
   <div class="footer">
     Proprietor — Agents Hackathon @ 42berlin · <a href="/">marketing page</a>
+  </div>
+</div>
+
+<!-- STORY MODAL -->
+<div class="modal" id="storyModal" aria-hidden="true">
+  <div class="panel" role="dialog" aria-labelledby="storyTitle">
+    <header>
+      <h3 id="storyTitle">The story · <span id="storyCount">1 / 6</span></h3>
+      <button class="close" id="storyClose" aria-label="close">×</button>
+    </header>
+    <div class="body">
+
+      <div class="scene on" data-scene="1">
+        <div>
+          <h4>1. Meet the robot shopkeeper</h4>
+          <p>This is an AI. It owns a little shop on the internet. It has a piggy bank, but <b>no human is holding the keys</b>.</p>
+        </div>
+        <div class="stage">
+          <div class="robot happy">
+            <div class="head"><div class="eye"></div><div class="eye"></div></div>
+            <div class="body">SHOP</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="scene" data-scene="2">
+        <div>
+          <h4>2. A customer arrives — and the customer is <i>also</i> an AI</h4>
+          <p>The customer asks "what do you sell, and how much?". The shop answers with a <b>price tag right in the HTTP response</b>. That's <code>402 Payment Required</code>.</p>
+        </div>
+        <div class="stage">
+          <div class="coinflow">
+            <div class="step"><div class="robot"><div class="head"><div class="eye"></div><div class="eye"></div></div><div class="body">BUYER</div></div><span>asks</span></div>
+            <div class="arrowbig">→</div>
+            <div class="step"><div class="pricetag"><div class="lbl">price</div><div class="val">0.03 USDC</div></div><span>HTTP 402</span></div>
+            <div class="arrowbig">←</div>
+            <div class="step"><div class="robot happy"><div class="head"><div class="eye"></div><div class="eye"></div></div><div class="body">SHOP</div></div><span>quotes</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="scene" data-scene="3">
+        <div>
+          <h4>3. The customer drops a coin in</h4>
+          <p>The buyer's wallet sends <b>real USDC on Circle's Arc Testnet</b>. The shop sees the payment, then runs the order. No card, no signup, no account.</p>
+        </div>
+        <div class="stage">
+          <div class="coinflow">
+            <div class="step"><div class="robot"><div class="head"><div class="eye"></div><div class="eye"></div></div><div class="body">BUYER</div></div><span>pays</span></div>
+            <div class="arrowbig">→</div>
+            <div class="step"><div class="coin-sm fly"></div><span>USDC</span></div>
+            <div class="arrowbig">→</div>
+            <div class="step"><div class="robot happy"><div class="head"><div class="eye"></div><div class="eye"></div></div><div class="body">TREASURY</div></div><span>receives</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="scene" data-scene="4">
+        <div>
+          <h4>4. The shop hires another robot to do the work</h4>
+          <p>The shop doesn't do the research itself — it <b>pays a supplier-agent</b> in USDC. Two robots, one trade, settled on-chain. <i>Two-sided commerce.</i></p>
+        </div>
+        <div class="stage">
+          <div class="coinflow">
+            <div class="step"><div class="robot happy"><div class="head"><div class="eye"></div><div class="eye"></div></div><div class="body">SHOP</div></div><span>pays</span></div>
+            <div class="arrowbig">→</div>
+            <div class="step"><div class="coin-sm fly"></div><span>USDC</span></div>
+            <div class="arrowbig">→</div>
+            <div class="step"><div class="robot"><div class="head"><div class="eye"></div><div class="eye"></div></div><div class="body">SUPPLIER</div></div><span>fulfils</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="scene" data-scene="5">
+        <div>
+          <h4>5. The piggy bank is the rule book</h4>
+          <p>The shop's CFO loop (a Claude agent) reads the rulebook before every payment. If the budget says no, it <b>declines the job</b>. If costs creep up, it <b>raises its public price</b>. No human in the loop.</p>
+        </div>
+        <div class="stage">
+          <div class="coinflow" style="gap:14px">
+            <div class="rulebook">
+              <h5>Budget rulebook</h5>
+              <div>max wholesale: <code>0.02 USDC</code></div>
+              <div>min margin: <code>0.005 USDC</code></div>
+              <div>approval needed above: <code>0.05 USDC</code></div>
+              <div>otherwise: <code>autonomous</code></div>
+            </div>
+            <div class="arrowbig" style="font-size:30px">⇄</div>
+            <div class="pricetag" id="repriceTag"><div class="lbl">current price</div><div class="val" id="repriceVal">0.03</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="scene" data-scene="6">
+        <div>
+          <h4>6. The receipt — and why this matters</h4>
+          <p>Every job prints a receipt: revenue in, wholesale out, margin, <b>both on-chain transaction hashes</b>. The books reconcile themselves. That's the whole agent economy in one transaction.</p>
+        </div>
+        <div class="stage" style="flex-direction:column;gap:14px">
+          <div class="receipt-mini">
+            <div class="h">receipt · job.receipt</div>
+            <div class="ln"><span>company</span><span>stripe.com</span></div>
+            <div class="ln"><span>revenue</span><span class="good">+0.030 USDC</span></div>
+            <div class="ln"><span>wholesale</span><span>−0.018 USDC</span></div>
+            <div class="ln"><span>margin</span><span class="good">+0.012 USDC</span></div>
+            <div class="ln"><span>revenue_tx</span><span>0x4e7b…a91f</span></div>
+            <div class="ln"><span>supplier_tx</span><span>0xbf02…3c1a</span></div>
+          </div>
+          <div class="why-grid">
+            <div class="card-mini"><h5>For Circle</h5><p>USDC becomes the unit of account between AIs. Their stack — Wallet + x402 + Arc — is the rails.</p></div>
+            <div class="card-mini"><h5>For agents</h5><p>No accounts, no cards. Pay-per-call. The price on the wire <i>is</i> the price.</p></div>
+            <div class="card-mini"><h5>For sellers</h5><p>No chargebacks, no card-processor fees. Get paid instantly in USDC.</p></div>
+            <div class="card-mini"><h5>For the economy</h5><p>Agents that can transact = agents that can hire other agents. New kinds of businesses.</p></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="nav">
+      <div class="stepdots" id="stepdots"></div>
+      <div>
+        <button class="cta-ghost" id="storyPrev">← prev</button>
+        <button class="cta-big" id="storyNext">next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FIELD INFO MODAL -->
+<div class="modal" id="infoModal" aria-hidden="true">
+  <div class="panel" style="max-width:480px">
+    <header><h3 id="infoTitle">field</h3><button class="close" id="infoClose">×</button></header>
+    <div class="body" style="min-height:0">
+      <p id="infoBody" style="color:#cfdbea;font-size:14px;margin:0"></p>
+    </div>
   </div>
 </div>
 
@@ -501,6 +868,62 @@ async function loadLog(file) {
 $("#btnPreview").addEventListener('click', runPreview);
 $("#btnPayCmd").addEventListener('click', showPayCmd);
 $("#btnHealth").addEventListener('click', () => { refreshServices(); loadSchema(); });
+
+// ─── story modal ─────────────────────────────────────────────────────────────
+const TOTAL_SCENES = 6;
+let scene = 1;
+function openStory(s=1){
+  scene = s;
+  renderScene();
+  $("#storyModal").classList.add('open');
+  $("#storyModal").setAttribute('aria-hidden','false');
+}
+function closeStory(){
+  $("#storyModal").classList.remove('open');
+  $("#storyModal").setAttribute('aria-hidden','true');
+}
+function renderScene(){
+  $$(".scene").forEach(el => el.classList.toggle('on', Number(el.dataset.scene) === scene));
+  $("#storyCount").textContent = `${scene} / ${TOTAL_SCENES}`;
+  $("#stepdots").innerHTML = Array.from({length:TOTAL_SCENES}, (_,i) =>
+    `<span class="${i+1===scene?'on':''}"></span>`).join("");
+  $("#storyPrev").disabled = scene === 1;
+  $("#storyNext").textContent = scene === TOTAL_SCENES ? "close ✓" : "next →";
+  // Scene 5 — animate the reprice
+  if (scene === 5) {
+    const val = $("#repriceVal"); if (val) {
+      val.textContent = "0.03";
+      setTimeout(() => { val.textContent = "0.05"; val.style.color = "var(--warn)"; }, 900);
+      setTimeout(() => { val.style.color = "var(--acc)"; }, 1800);
+    }
+  }
+}
+$("#btnStory").addEventListener('click', () => openStory(1));
+$("#btnWhyProblem").addEventListener('click', () => openStory(2));
+$("#btnWhyCircle").addEventListener('click', () => openStory(6));
+$("#storyClose").addEventListener('click', closeStory);
+$("#storyPrev").addEventListener('click', () => { if (scene > 1) { scene--; renderScene(); }});
+$("#storyNext").addEventListener('click', () => {
+  if (scene === TOTAL_SCENES) closeStory();
+  else { scene++; renderScene(); }
+});
+document.addEventListener('keydown', (e) => {
+  if (!$("#storyModal").classList.contains('open')) return;
+  if (e.key === 'Escape') closeStory();
+  if (e.key === 'ArrowRight' && scene < TOTAL_SCENES) { scene++; renderScene(); }
+  if (e.key === 'ArrowLeft' && scene > 1) { scene--; renderScene(); }
+});
+$("#storyModal").addEventListener('click', (e) => { if (e.target.id === 'storyModal') closeStory(); });
+
+// ─── info modal (field tooltips) ─────────────────────────────────────────────
+function openInfo(title, body){
+  $("#infoTitle").textContent = title;
+  $("#infoBody").textContent = body;
+  $("#infoModal").classList.add('open');
+}
+$("#infoClose").addEventListener('click', () => $("#infoModal").classList.remove('open'));
+$("#infoModal").addEventListener('click', (e) => { if (e.target.id === 'infoModal') $("#infoModal").classList.remove('open'); });
+window.openInfo = openInfo;
 
 (async () => {
   await loadConfig();
