@@ -39,3 +39,4 @@ data/*.local.json
 # IlnamiquiliaTsaa local backups (never commit)
 .ilnamiquiliatsaa_backups/
 .ilnamiquiliatsaa/tsaa
+claude.session
