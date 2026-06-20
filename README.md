@@ -76,17 +76,63 @@ Between jobs, the CFO watches the treasury and **adjusts the public price** to d
 Spend is **policy-governed**: payments run autonomously below an approval threshold and escalate for
 human approval above it — autonomous by default, supervised only at the tail.
 
-## The live demo (≈ 2–3 min)
+## Run it (live on Arc Testnet — no real money)
 
-1. Show the treasury balance and the current published price.
-2. Enrich a **well-known** company → cheap to fulfill, healthy margin, treasury ticks **up**.
-3. Enrich an **obscure** company → many searches, **thin/negative** margin; the agent flags the loss.
-4. The agent **autonomously raises its price** in response.
-5. Enrich again → margin restored. Open the **ledger**: per-job P&L + reasoning + tx hashes.
-6. (Stretch) Flood it → it **throttles / declines** jobs it can't fulfill profitably.
+**Prerequisites**
+- Node 20+, Python 3.11+ with `uv`, and the **Circle CLI** logged in to a testnet agent session:
+  `circle wallet login <email> --type agent --testnet`.
+- `cp .env.example .env`, then fill `TAVILY_API_KEY`, `NEBIUS_API_KEY` / `NEBIUS_BASE_URL` / `NEBIUS_MODEL`.
+  The three agent-wallet addresses (treasury / supplier / buyer), `ENGINE_URL` (→ `:8010`),
+  `FACILITATOR_URL`, and `CIRCLE_CHAIN` are already templated. Fund each wallet:
+  `circle wallet fund --testnet --address <addr> --chain ARC-TESTNET`.
+- Install deps: `npm install` (TypeScript money layer) and `cd engine && uv sync` (Python engine).
+
+**Start the services** (each in its own terminal)
+```bash
+cd engine && uv run uvicorn app.main:app --port 8010   # fulfilment engine (matches ENGINE_URL in .env)
+npm run supplier                                        # supplier-agent — x402 seller (SUPPLIER wallet)
+npm run storefront                                      # storefront     — x402 seller (TREASURY wallet)
+npm run deploy:wallets                                  # one-time: deploy the SCAs so they can sign x402
+```
+
+**Drive the demo**
+```bash
+# (optional) minimal Circle loop check: buyer pays a throwaway echo seller
+npm run echo-seller   # terminal A
+npm run smoke         # terminal B → prints amount + settlement tx
+
+# 1. inspect the storefront's price table + schema (free)
+curl -s localhost:3000/v1/enrich/schema | jq
+
+# 2. full two-sided loop — BUYER pays storefront → storefront pays SUPPLIER → profile + receipt
+circle services pay http://localhost:3000/v1/enrich/basic \
+  --address "$BUYER_WALLET_ADDRESS" --chain ARC-TESTNET \
+  -X POST -d '{"company":"stripe.com"}' --max-amount 0.02 --output json | jq
+
+# 3. the CFO *agent* processes an order itself (Claude Agent SDK on your subscription —
+#    run from a terminal where Claude Code is authenticated)
+npm run cfo -- '{"order_id":"o1","company":"stripe.com","depth":"basic","retail_paid_usdc":0.01}'
+
+# 4. read the spend ledger — per-order P&L, reasoning, and tx hashes
+npx tsx cfo/ledger-cli.ts
+```
+
+Component-level detail: [`engine/README.md`](engine/README.md) · [`money/README.md`](money/README.md).
+
+## The demo narrative (≈ 2–3 min)
+
+1. Show the treasury balance and the current published price (`/v1/enrich/schema`).
+2. Enrich a company → storefront collects retail, CFO pays wholesale, **receipt shows a positive margin**; the ledger ticks up.
+3. Raise the supplier's wholesale price → the CFO detects it on `inspect` and **raises retail to defend margin**.
+4. Force a tiny daily cap → the budget **gate declines the spend before any charge** (decline-before-charge).
+5. Open the **ledger**: per-job P&L + natural-language reasoning + tx hashes.
 
 ## Status
 
-Greenfield. This repo currently contains the **design** only — see
-[`docs/superpowers/specs/2026-06-19-autonomous-enrichment-saas-design.md`](docs/superpowers/specs/2026-06-19-autonomous-enrichment-saas-design.md)
-for the full architecture, data flow, pricing policy, scope/cut-list, and open questions.
+**Built and live-verified on Arc Testnet.** The fulfilment engine, the money layer (Circle treasury +
+supplier-agent + storefront), and the CFO agent + spend ledger are all implemented, unit-tested, and
+proven live with real USDC payments — the full two-sided loop (buyer → storefront → supplier → engine)
+and the CFO's gated pay/decline both settle on-chain. Use the run steps above.
+
+Design + validated Circle Agent Stack integration:
+[`docs/superpowers/specs/2026-06-19-autonomous-enrichment-saas-design.md`](docs/superpowers/specs/2026-06-19-autonomous-enrichment-saas-design.md).
