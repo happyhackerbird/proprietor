@@ -37,8 +37,9 @@ export interface CfoAgentDeps {
 const SYSTEM_PROMPT =
   "You are the Proprietor's CFO — the autonomous agent that holds the treasury wallet and decides and " +
   "executes the outbound USDC payments that run the business. For each order you are given, you MUST: " +
-  "(1) call circle_get_balance to check runway; (2) call circle_inspect_service to read the supplier's " +
-  "current wholesale price for the order's depth; (3) decide whether to proceed within the daily budget " +
+  "(1) call circle_get_balance to check runway; (2) call circle_inspect_service WITH the order's depth " +
+  "and company to read the supplier's current wholesale price for that research route (it inspects the " +
+  "x402-gated POST /research/<depth>); (3) decide whether to proceed within the daily budget " +
   "and runway floor, narrating your reasoning; (4) call circle_pay_service exactly once to buy the research " +
   "from the supplier — this is the only way money leaves the treasury and it is gated; (5) return the " +
   "resulting justified receipt. Never pay twice for one order and never retry a failed paid call.";
@@ -65,11 +66,15 @@ export function buildCanUseTool(deps: {
     }
     const depthRaw = String((input as { depth?: unknown }).depth ?? "");
     const depth: Depth = isDepth(depthRaw) ? depthRaw : "standard";
+    const company = String((input as { company?: unknown }).company ?? "");
 
     const balanceRaw = await deps.treasury.getBalance(deps.treasuryAddress);
     const balanceUsdc = parseBalanceUsdc(balanceRaw);
 
-    const inspectRaw = await deps.treasury.inspectService(deps.supplierUrl);
+    const inspectRaw = await deps.treasury.inspectService(
+      `${deps.supplierUrl}/research/${depth}`,
+      { method: "POST", data: { company } },
+    );
     let wholesaleUsdc = parseWholesaleUsdc(inspectRaw, depth);
     if (!Number.isFinite(wholesaleUsdc)) {
       wholesaleUsdc = Number((input as { wholesale_usdc?: unknown }).wholesale_usdc ?? NaN);

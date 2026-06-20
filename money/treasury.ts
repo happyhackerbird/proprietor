@@ -47,6 +47,11 @@ export interface PayResult {
   txHash?: string;
 }
 
+export interface InspectOptions {
+  method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+  data?: unknown;
+}
+
 /** Raw `circle services pay --output json` payload shape. */
 interface PayPayload {
   response?: unknown;
@@ -159,9 +164,15 @@ export class Treasury {
     };
   }
 
-  /** Inspect a paid endpoint: price + input schema. */
-  async inspectService(url: string): Promise<unknown> {
-    return unwrap(await this.run(["services", "inspect", url, "--output", "json"]));
+  /** Inspect a paid endpoint: price + input schema. With opts.method/opts.data the inspect
+   * is issued as that method with that JSON body (x402 priced routes are POST /research/<depth>);
+   * no opts = GET (unchanged, backward compatible). */
+  async inspectService(url: string, opts: InspectOptions = {}): Promise<unknown> {
+    const args = ["services", "inspect", url];
+    if (opts.method) args.push("-X", opts.method);
+    if (opts.data !== undefined) args.push("-d", typeof opts.data === "string" ? opts.data : JSON.stringify(opts.data));
+    args.push("--output", "json");
+    return unwrap(await this.run(args));
   }
 }
 
