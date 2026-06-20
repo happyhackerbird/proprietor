@@ -15,6 +15,7 @@
     "storefront": "tsx storefront/server.ts",
     "live-verify": "bash scripts/live-verify.sh",
     "cfo": "tsx cfo/main.ts",
+    "cfo:demo": "tsx scripts/cfo-demo.ts",
     "cfo:reprice": "tsx cfo/reprice.ts",
     "cfo:ledger": "tsx cfo/ledger-cli.ts"
   },
