@@ -35,6 +35,11 @@ export function opt(key: string, fallback: string): string {
   return v == null || v.trim() === "" ? fallback : v.trim();
 }
 
+/** Parse a USD price string ("$0.03" | "0.03") to a number. */
+export function parseUsd(s: string): number {
+  return Number(s.replace(/^\$/, "").trim());
+}
+
 export const env = {
   // ── Network constants (spec-pinned defaults; overridable) ──
   chain: () => opt("CIRCLE_CHAIN", "ARC-TESTNET"),
@@ -50,6 +55,8 @@ export const env = {
   // ── Service wiring ──
   engineUrl: () => opt("ENGINE_URL", "http://localhost:8000"),
   supplierUrl: () => opt("SUPPLIER_URL", "http://localhost:4000"),
+  /** Port the supplier listens on — derived from SUPPLIER_URL (default 4000). */
+  supplierPort: () => Number(new URL(opt("SUPPLIER_URL", "http://localhost:4000")).port || "4000"),
   storefrontPort: () => Number(opt("STOREFRONT_PORT", "3000")),
   echoPort: () => Number(opt("ECHO_PORT", "4000")),
 

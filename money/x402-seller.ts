@@ -24,6 +24,13 @@ export interface PaidRoute {
   price: string;
   /** Business handler; its returned object is merged with the receipt. */
   handler: (body: unknown, req: Request) => Promise<unknown> | unknown;
+  /**
+   * When true, the handler OWNS the full response (it built its own richer
+   * receipt) — the factory returns the handler result verbatim and does not
+   * append the default receipt. Used by the storefront (D8/D9). Default false:
+   * simple sellers (echo, supplier) get the default receipt appended.
+   */
+  ownsResponse?: boolean;
 }
 
 export interface PaidAppConfig {
@@ -59,10 +66,15 @@ export function buildReceipt(payment?: VerifiedPayment): Receipt {
 }
 
 /** Wrap a business handler into an Express handler that appends the receipt. */
-export function wrapHandler(handler: PaidRoute["handler"]) {
+export function wrapHandler(handler: PaidRoute["handler"], ownsResponse = false) {
   return async (req: Request, res: Response): Promise<void> => {
     try {
       const result = await handler(req.body, req);
+      if (ownsResponse) {
+        // Handler built its own (richer) response/receipt — return it verbatim.
+        res.json(result);
+        return;
+      }
       const payment = (req as unknown as PaymentRequest).payment;
       res.json({ ...(result as Record<string, unknown>), receipt: buildReceipt(payment) });
     } catch (err) {
@@ -86,7 +98,7 @@ export function createPaidApp(config: PaidAppConfig): express.Express {
   });
 
   for (const route of config.routes) {
-    app[route.method](route.path, gateway.require(route.price), wrapHandler(route.handler));
+    app[route.method](route.path, gateway.require(route.price), wrapHandler(route.handler, route.ownsResponse));
   }
 
   return app;
