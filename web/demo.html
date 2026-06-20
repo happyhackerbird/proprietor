@@ -314,6 +314,106 @@
     </div>
   </section>
 
+  <!-- CFO & TREASURY -->
+  <section class="grid cols-2" style="margin-top:14px">
+    <div class="card" style="background:linear-gradient(180deg,#13202a,#0e1117);border-color:#1f3a4a">
+      <h2>The CFO loop <span class="hint">the brain that decides every payment</span></h2>
+      <p style="margin:0 0 10px;color:#cfdbea">
+        For every customer order, a <b>Claude Agent SDK</b> loop walks through this decision tree.
+        The LLM <i>proposes</i>; the budget rulebook <i>disposes</i>. The agent can never override the gate.
+      </p>
+      <div class="cfo-tree">
+        <div class="cfo-node start">
+          <div class="t">1 · Inspect</div>
+          <div class="d">Read supplier price + treasury balance + last 10 margins from the ledger.</div>
+        </div>
+        <div class="cfo-arrow">↓</div>
+        <div class="cfo-node">
+          <div class="t">2 · Gate <code>cfo/gate.ts</code></div>
+          <div class="d">Check the rulebook before any tool call. Pure function — no LLM here.</div>
+        </div>
+        <div class="cfo-branches">
+          <div class="cfo-leaf ok">
+            <div class="lbl">✓ allow</div>
+            <div class="dsc">wholesale ≤ cap · margin ≥ min · spend ≤ autonomous threshold → pay the supplier</div>
+          </div>
+          <div class="cfo-leaf warn">
+            <div class="lbl">⏸ approval-deny</div>
+            <div class="dsc">spend &gt; threshold → escalate to a human-in-the-loop step</div>
+          </div>
+          <div class="cfo-leaf bad">
+            <div class="lbl">✗ budget-deny</div>
+            <div class="dsc">would breach max-wholesale or min-margin → refuse the job (no charge moves)</div>
+          </div>
+          <div class="cfo-leaf info">
+            <div class="lbl">↻ reprice</div>
+            <div class="dsc">last N margins thin → raise public price before next quote</div>
+          </div>
+        </div>
+        <div class="cfo-arrow">↓</div>
+        <div class="cfo-node">
+          <div class="t">3 · Receipt</div>
+          <div class="d">Write revenue, wholesale, margin, both tx hashes, decision branch + reasoning to the ledger. One row = one auditable decision.</div>
+        </div>
+      </div>
+      <div class="legend" style="margin-top:8px">
+        Code: <code>cfo/agent.ts</code> (loop) · <code>cfo/gate.ts</code> (rules) · <code>cfo/repricer.ts</code> (pricing) · <code>cfo/processor.ts</code> (orchestration) · <code>cfo/read-view.ts</code> (ledger queries).
+      </div>
+    </div>
+
+    <div class="card" style="background:linear-gradient(180deg,#1a1428,#0e1117);border-color:#3a2c50">
+      <h2>Treasury concepts <span class="hint">how the piggy bank works</span></h2>
+      <ul class="glos" style="margin-top:0">
+        <li>
+          <b>Treasury</b> — the Circle Agent Wallet the shop owns. It's <i>the</i> company account. Holds all USDC. The agent can sign on its own behalf; no human keys exist outside Circle's custody.
+        </li>
+        <li>
+          <b>Balance</b> — current USDC in the wallet. Read before every quote so the agent never promises work it can't pay for.
+        </li>
+        <li>
+          <b>Runway</b> — balance ÷ recent average loss per job. If runway dips below N jobs, the CFO raises the price <i>before</i> running out.
+        </li>
+        <li>
+          <b>Wholesale cap (<code>max_wholesale_usdc</code>)</b> — hard ceiling per job on what the agent will pay the supplier. Above it, the job is refused outright.
+        </li>
+        <li>
+          <b>Minimum margin (<code>min_margin_usdc</code>)</b> — the agent won't accept a job whose expected profit is below this. Defends the business from being out-priced into the ground.
+        </li>
+        <li>
+          <b>Approval threshold (<code>autonomous_max_usdc</code>)</b> — spend ≤ threshold runs autonomously; above it escalates to a human. Autonomy is the default, supervision is the exception.
+        </li>
+        <li>
+          <b>Decline-before-charge</b> — if the agent can't honour a paid request, the route returns <code>409</code>. x402 has no refunds, so we never collect a <code>402</code> we can't fulfil.
+        </li>
+        <li>
+          <b>Settlement state</b> — <code>settled</code> (final on Arc) or <code>pending-batch</code> (Circle Gateway batching). The ledger records both states transparently.
+        </li>
+        <li>
+          <b>Ledger</b> — append-only SQLite of every job: order ID, decision branch, revenue, wholesale, margin, tx hashes, LLM reasoning. The CFO reads its own ledger to learn.
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <style>
+    .cfo-tree{display:flex;flex-direction:column;align-items:stretch;gap:6px}
+    .cfo-node{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+    .cfo-node.start{border-color:var(--acc)}
+    .cfo-node .t{font:700 12px/1.2 var(--sans);color:var(--ink)}
+    .cfo-node .t code{font-family:var(--mono);color:var(--acc2);font-size:11px;margin-left:4px}
+    .cfo-node .d{margin-top:4px;font-size:12px;color:var(--mut);line-height:1.5}
+    .cfo-arrow{text-align:center;color:var(--mut);font-size:18px;margin:2px 0}
+    .cfo-branches{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin:2px 0}
+    @media(max-width:560px){.cfo-branches{grid-template-columns:1fr}}
+    .cfo-leaf{padding:9px 10px;border-radius:8px;border:1px solid var(--line);background:#0a1018}
+    .cfo-leaf .lbl{font:700 12px/1 var(--sans)}
+    .cfo-leaf .dsc{margin-top:4px;font-size:11.5px;color:var(--mut);line-height:1.5}
+    .cfo-leaf.ok{border-color:#1f4d3c} .cfo-leaf.ok .lbl{color:var(--good)}
+    .cfo-leaf.warn{border-color:#4d401f} .cfo-leaf.warn .lbl{color:var(--warn)}
+    .cfo-leaf.bad{border-color:#4d1f1f} .cfo-leaf.bad .lbl{color:var(--bad)}
+    .cfo-leaf.info{border-color:#1f3a4d} .cfo-leaf.info .lbl{color:var(--acc2)}
+  </style>
+
   <!-- Status -->
   <section class="grid cols-4" style="margin-top:14px">
     <div class="card" id="svcCard">
@@ -322,11 +422,15 @@
     </div>
 
     <div class="card">
-      <h2>Treasury <span class="hint">budget</span></h2>
+      <h2>Treasury &amp; rulebook <span class="hint">CFO uses these every job</span></h2>
+      <div class="row"><span class="k">Chain</span><span class="v" id="chain">ARC-TESTNET</span></div>
       <div class="row"><span class="k">Treasury</span><span class="v" id="treasuryAddr">—</span></div>
       <div class="row"><span class="k">Supplier</span><span class="v" id="supplierAddr">—</span></div>
       <div class="row"><span class="k">Buyer</span><span class="v" id="buyerAddr">—</span></div>
-      <div class="row"><span class="k">Chain</span><span class="v" id="chain">ARC-TESTNET</span></div>
+      <div class="row"><span class="k">max wholesale</span><span class="v">0.020 USDC</span></div>
+      <div class="row"><span class="k">min margin</span><span class="v">0.005 USDC</span></div>
+      <div class="row"><span class="k">autonomous ≤</span><span class="v">0.050 USDC</span></div>
+      <div class="row"><span class="k">approval &gt;</span><span class="v">human</span></div>
     </div>
 
     <div class="card" style="grid-column:span 2">
