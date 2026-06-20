@@ -1,0 +1,35 @@
+{
+  "name": "proprietor-money-layer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Proprietor TypeScript money layer — Circle x402 treasury, supplier-agent, and storefront on Arc Testnet.",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "deploy:wallets": "tsx money/deploy.ts",
+    "echo-seller": "tsx money/echo-seller.ts",
+    "smoke": "tsx money/smoke.ts",
+    "supplier": "tsx supplier/research-seller.ts",
+    "storefront": "tsx storefront/server.ts"
+  },
+  "dependencies": {
+    "@circle-fin/x402-batching": "^3.2.0",
+    "@x402/core": "^2.16.0",
+    "@x402/evm": "^2.16.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "viem": "^2.52.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true
+  }
+}
