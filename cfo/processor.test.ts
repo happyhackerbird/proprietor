@@ -90,6 +90,13 @@ describe("parseWholesaleUsdc", () => {
     expect(parseWholesaleUsdc({ accepts: [{ maxAmountRequired: "0.005" }] }, "basic")).toBe(0.005);
     expect(Number.isNaN(parseWholesaleUsdc({ nope: 1 }, "standard"))).toBe(true);
   });
+
+  it("reads the x402 inspect price object { amount, formatted } as atomic USDC", () => {
+    expect(parseWholesaleUsdc({ price: { amount: "5000", formatted: "$0.005 USDC" } }, "basic")).toBe(0.005);
+    expect(parseWholesaleUsdc({ price: { amount: 15000 } }, "standard")).toBe(0.015);
+    // object price without a numeric amount falls through to a sibling shape (not swallowed)
+    expect(parseWholesaleUsdc({ price: { formatted: "$0.04 USDC" }, accepts: [{ maxAmountRequired: "0.04" }] }, "comprehensive")).toBe(0.04);
+  });
 });
 
 // ── Order processing ─────────────────────────────────────────────────────────────

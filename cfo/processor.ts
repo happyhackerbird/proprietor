@@ -98,6 +98,15 @@ export function parseWholesaleUsdc(raw: unknown, depth: Depth): number {
       const v = o[k];
       if (typeof v === "number") return v;
       if (typeof v === "string") return parseUsd(v);
+      // x402 inspect shape: { price: { amount: "5000", formatted: "$0.005 USDC" } } —
+      // `amount` is atomic USDC (6 decimals). Falls through if no numeric amount.
+      if (v && typeof v === "object") {
+        const amt = (v as Record<string, unknown>).amount;
+        if (typeof amt === "string" || typeof amt === "number") {
+          const n = Number(amt) / 1e6;
+          if (Number.isFinite(n)) return n;
+        }
+      }
     }
     if (Array.isArray(o.accepts) && o.accepts.length > 0) {
       return parseWholesaleUsdc(o.accepts[0], depth);
@@ -133,7 +142,10 @@ export class CfoProcessor {
     const balanceUsdc = parseBalanceUsdc(balanceRaw);
 
     // 2. Wholesale price for this tier (inspect; surface, don't silently substitute).
-    const inspectRaw = await this.treasury.inspectService(this.supplierUrl);
+    const inspectRaw = await this.treasury.inspectService(
+      `${this.supplierUrl}/research/${order.depth}`,
+      { method: "POST", data: { company: order.company } },
+    );
     let wholesaleUsdc = parseWholesaleUsdc(inspectRaw, order.depth);
     let priceSource = "inspect";
     if (!Number.isFinite(wholesaleUsdc)) {

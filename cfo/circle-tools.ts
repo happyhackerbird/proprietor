@@ -42,10 +42,24 @@ export function createCircleMcpServer(deps: CircleToolDeps) {
 
   const circle_inspect_service = tool(
     "circle_inspect_service",
-    "Inspect the supplier-agent's paid service to read its current wholesale price and input schema per depth.",
-    { url: z.string().optional().describe("supplier service URL; defaults to the configured supplier") },
-    async ({ url }) => {
-      const info = await treasury.inspectService(url ?? supplierUrl);
+    "Inspect the supplier-agent's paid research route for a given depth to read its current x402 " +
+      "wholesale price. You MUST pass the order's `depth` and `company`: it inspects POST /research/<depth> " +
+      "with the company body so the returned price.amount is the real per-job wholesale (HTTP 402). Call " +
+      "this before circle_pay_service so the budget gate sees the verified price.",
+    {
+      depth: z.string().describe("research depth: basic | standard | comprehensive"),
+      company: z.string().describe("the company to research (sent as the inspect request body)"),
+      url: z.string().optional().describe("supplier base URL; defaults to the configured supplier"),
+    },
+    async ({ depth, company, url }) => {
+      if (!isDepth(depth)) {
+        return { content: [{ type: "text", text: `error: invalid depth ${JSON.stringify(depth)}` }], isError: true };
+      }
+      const base = url ?? supplierUrl;
+      const info = await treasury.inspectService(`${base}/research/${depth}`, {
+        method: "POST",
+        data: { company },
+      });
       return { content: [{ type: "text", text: JSON.stringify(info) }] };
     },
   );
