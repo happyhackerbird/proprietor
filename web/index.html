@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Proprietor — an AI agent that owns a company</title>
+<meta name="description" content="An AI agent that autonomously owns and operates a profitable micro-SaaS, settling every dollar of revenue and cost in USDC through a Circle Agent Wallet." />
+<meta property="og:title" content="Proprietor — an AI agent that owns a company" />
+<meta property="og:description" content="It sells a company-enrichment API, gets paid in USDC, and pays its own suppliers in USDC. Its only job: stay solvent and grow the treasury." />
+<style>
+  :root{
+    --bg:#0a0c10; --panel:#12151c; --panel2:#0e1117; --line:#222936;
+    --ink:#e7ecf3; --mut:#93a0b4; --acc:#5eead4; --acc2:#7dd3fc; --warn:#fbbf24; --good:#34d399;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:radial-gradient(1200px 600px at 50% -200px,#16202c 0%,var(--bg) 60%);
+    color:var(--ink);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:var(--acc2);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:920px;margin:0 auto;padding:0 22px}
+  header{padding:64px 0 28px;text-align:center}
+  .badges{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:18px 0 0}
+  .badge{font:600 12px/1 var(--sans);color:var(--mut);background:var(--panel);
+    border:1px solid var(--line);border-radius:999px;padding:7px 12px}
+  .badge b{color:var(--acc)}
+  h1{font-size:clamp(40px,7vw,68px);margin:6px 0 0;letter-spacing:-.03em;
+    background:linear-gradient(180deg,#fff,#9fb2c8);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tag{font-size:clamp(16px,2.4vw,20px);color:var(--mut);max-width:680px;margin:16px auto 0}
+  .cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:26px 0 0}
+  .btn{font:600 14px/1 var(--sans);padding:12px 18px;border-radius:10px;border:1px solid var(--line);
+    background:var(--panel);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+  .btn.primary{background:var(--acc);color:#04201b;border-color:transparent}
+  .btn:hover{transform:translateY(-1px)}
+  section{padding:34px 0;border-top:1px solid var(--line)}
+  h2{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin:0 0 16px;font-weight:700}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+  .grid{display:grid;gap:14px}
+  .cols-3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:680px){.cols-3{grid-template-columns:1fr}}
+  .price{display:flex;flex-direction:column;gap:6px}
+  .price .d{font:700 13px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--acc)}
+  .price .p{font:700 30px/1 var(--mono);color:var(--ink)}
+  .price .s{font-size:12px;color:var(--mut)}
+  pre{font-family:var(--mono);font-size:12.5px;line-height:1.45;color:#cdd8e6;background:var(--panel2);
+    border:1px solid var(--line);border-radius:12px;padding:16px;overflow:auto;margin:0}
+  .diagram{font-size:11px;color:#aebfd2}
+  .kv{display:flex;flex-direction:column;gap:10px}
+  .row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 14px;
+    background:var(--panel2);border:1px solid var(--line);border-radius:10px;flex-wrap:wrap}
+  .row .lab{font:700 12px/1 var(--sans);letter-spacing:.05em;text-transform:uppercase;color:var(--mut)}
+  .row .val{font-family:var(--mono);font-size:13px;color:var(--ink);word-break:break-all}
+  .pill{font:600 11px/1 var(--sans);padding:5px 9px;border-radius:999px;border:1px solid var(--line);color:var(--mut)}
+  .pill.live{color:var(--good);border-color:#1f4d3c;background:#0c1a15}
+  .pill.fill{color:var(--warn);border-color:#4d401f;background:#1a150c}
+  .video{position:relative;aspect-ratio:16/9;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--panel2)}
+  .video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .video .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--mut);text-align:center;padding:20px}
+  .muted{color:var(--mut)}
+  .lead{font-size:17px;color:#c5d0de}
+  ul.clean{list-style:none;padding:0;margin:0}
+  ul.clean li{padding:9px 0;border-bottom:1px dashed var(--line);display:flex;gap:10px}
+  ul.clean li:last-child{border-bottom:0}
+  ul.clean b{color:var(--acc)}
+  footer{padding:40px 0 70px;text-align:center;color:var(--mut);font-size:13px}
+  .note{font-size:12px;color:var(--mut);margin-top:10px}
+  code.inline{font-family:var(--mono);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:2px 6px;font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="badges">
+      <span class="badge">Agents Hackathon <b>@ 42berlin</b></span>
+      <span class="badge">Track: <b>Agentic Commerce</b></span>
+      <span class="badge"><b>Circle</b> · Tavily · Nebius</span>
+    </div>
+    <h1>Proprietor</h1>
+    <p class="tag">An AI agent that autonomously <b>owns and operates a profitable micro-SaaS</b> —
+      settling every dollar of revenue and cost in <b>USDC</b> through a Circle Agent Wallet.</p>
+    <div class="cta">
+      <a class="btn primary" href="#proof">See the on-chain proof</a>
+      <a class="btn" id="repoBtn" href="#" target="_blank" rel="noopener">View code ↗</a>
+      <a class="btn" href="/v1/enrich/schema" target="_blank" rel="noopener">Live API ↗</a>
+    </div>
+  </header>
+
+  <section id="what">
+    <h2>What it is</h2>
+    <p class="lead">Proprietor is a <b>self-running company</b>. Its product is a Company Enrichment API:
+      send a company domain, get a structured profile back. The agent is the CEO, the CFO, and the only
+      employee. Its <b>Circle Agent Wallet is the treasury</b> — customers pay it in USDC, and it pays its
+      own suppliers in USDC to fulfil each order. Its single standing goal: <b>stay solvent and grow the
+      treasury.</b></p>
+    <ul class="clean" style="margin-top:14px">
+      <li><b>Wallet = governance.</b> No human approves each action — the budget defines what the agent may do.</li>
+      <li><b>Autonomy = solvency.</b> Every decision has stakes in real USDC. Accept an unprofitable job → real money lost.</li>
+      <li><b>Two-sided commerce.</b> Money flows in from customers and out to suppliers — a market, not a one-shot transfer.</li>
+    </ul>
+  </section>
+
+  <section id="api">
+    <h2>Live price table <span class="pill live" id="apiState">fetching /v1/enrich/schema…</span></h2>
+    <div class="grid cols-3" id="priceGrid"><!-- filled from the live schema endpoint --></div>
+    <p class="note">Rendered live from this deployment's <a href="/v1/enrich/schema" target="_blank" rel="noopener">/v1/enrich/schema</a>
+      — the same JSON a buyer-agent inspects before paying. Terms: <span id="terms" class="muted"></span></p>
+  </section>
+
+  <section id="how">
+    <h2>How it works — the loop</h2>
+    <div class="panel"><pre class="diagram">                   ┌──────────────────────────────────────────────────┐
+   customer-agent  │                  PROPRIETOR                       │
+        │          │  ┌────────────┐   ┌───────────┐   ┌────────────┐  │
+        │ 1. GET   │  │ Storefront │   │    CFO     │   │ Fulfilment │  │
+        │  schema  │  │  (x402     │──▶│  pricing + │──▶│  engine    │  │
+        │  + price │  │   API)     │   │  solvency  │   │ (research) │  │
+        │◀─────────┼──│            │   └───────────┘   └─────┬──────┘  │
+        │ 2. POST  │  └─────┬──────┘                         │         │
+        │  {domain}│        │                                │ pays    │
+        │◀── 402 ──┼────────┘                                ▼ USDC    │
+        │ 3. pay   │  ┌───────────────────┐          ┌───────────────┐ │
+        │  USDC ───┼─▶│ Circle Agent      │◀─────────│ Supplier-agent│ │
+        │          │  │ Wallet (treasury) │  pays    │ (Tavily +     │ │
+        │ 4. brief │  └───────────────────┘  USDC    │  Nebius x402) │ │
+        │◀─────────┼──── + receipt (tx hashes, cost breakdown, margin)│ │
+        └──────────┤                                 └───────────────┘ │
+                   └──────────────────────────────────────────────────┘</pre></div>
+    <p class="note">A buyer-agent inspects the price + schema, POSTs a domain, gets <code class="inline">402 Payment Required</code>,
+      pays USDC → revenue lands in the treasury → Proprietor pays its supplier in USDC, fulfils, and returns the brief
+      <b>plus a receipt</b>: revenue, itemized costs, transaction hashes, and gross margin.</p>
+  </section>
+
+  <section id="proof">
+    <h2>On-chain proof — live on Arc Testnet</h2>
+    <div class="kv" id="proofList"><!-- filled from CONFIG below --></div>
+    <p class="note">The honest "live deployment": the two-sided USDC loop <b>settles on-chain</b>. The paid API
+      itself is driven by an authenticated Circle agent session on the operator's machine (the wallet <em>is</em>
+      the governance boundary), so it isn't exposed publicly — the chain is the public record.</p>
+  </section>
+
+  <section id="video">
+    <h2>Watch the demo · 2–3 min</h2>
+    <div class="video" id="videoBox">
+      <div class="ph">
+        <div style="font-size:34px">▶</div>
+        <div>Demo video — paste the embed URL in <code class="inline">CONFIG.videoEmbedUrl</code></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="run">
+    <h2>Run it yourself</h2>
+    <pre># prove the full two-sided USDC loop settles on-chain
+npm run live-verify
+
+# show the CFO's judgment: ALLOW · decline-on-cap · escalate-on-approval · repricing · ledger
+npm run cfo:demo</pre>
+    <p class="note">Full setup and component detail in the <a id="readmeBtn" href="#" target="_blank" rel="noopener">repo README</a>.</p>
+  </section>
+
+  <footer>
+    <div>Built for the Agents Hackathon @ 42berlin — Agentic Commerce. Circle Agent Wallet · Tavily · Nebius TokenFactory.</div>
+    <div style="margin-top:8px"><a id="footRepo" href="#" target="_blank" rel="noopener">github.com/happyhackerbird/proprietor</a></div>
+  </footer>
+
+</div>
+
+<script>
+  /* ─────────────────────────────────────────────────────────────────────────
+     CONFIG — the only block you edit. Fill these in after a `live-verify` run.
+     ───────────────────────────────────────────────────────────────────────── */
+  const CONFIG = {
+    repoUrl: "https://github.com/happyhackerbird/proprietor",
+    readmeUrl: "https://github.com/happyhackerbird/proprietor#readme",
+
+    // Paste your demo video embed URL (YouTube /embed/<id> or Loom /embed/<id>). Leave "" to keep the placeholder.
+    videoEmbedUrl: "",
+
+    // Block-explorer "view tx" base for Arc Testnet. VERIFY this resolves before relying on the links;
+    // leave "" to render hashes as plain text (no link).
+    explorerTxBase: "",
+    // Block-explorer "view address" base. Leave "" to render addresses as plain text.
+    explorerAddrBase: "",
+
+    // On-chain proof from a `npm run live-verify` run. Fill the hashes/addresses (testnet, public).
+    proof: [
+      { lab: "Revenue tx (buyer → storefront)", val: "", kind: "tx" },
+      { lab: "Supplier tx (storefront → supplier)", val: "", kind: "tx" },
+      { lab: "Treasury wallet", val: "", kind: "addr" },
+      { lab: "Supplier wallet", val: "", kind: "addr" },
+      { lab: "Buyer wallet", val: "", kind: "addr" },
+    ],
+
+    // Fallback price table if the live fetch fails (kept in sync with .env).
+    fallbackSchema: {
+      price_table: { basic: "$0.01", standard: "$0.03", comprehensive: "$0.08" },
+      terms: "x402 USDC on Arc Testnet; decline-before-charge; no refunds."
+    }
+  };
+
+  /* ── wire up static links ── */
+  for (const id of ["repoBtn","footRepo"]) document.getElementById(id).href = CONFIG.repoUrl;
+  document.getElementById("readmeBtn").href = CONFIG.readmeUrl;
+
+  /* ── live price table: fetch this deployment's own schema endpoint ── */
+  const subtitle = { basic:"quick profile", standard:"+ news & people", comprehensive:"full diligence" };
+  function renderSchema(s, live){
+    const pt = (s && s.price_table) || CONFIG.fallbackSchema.price_table;
+    const grid = document.getElementById("priceGrid");
+    grid.innerHTML = "";
+    for (const d of ["basic","standard","comprehensive"]){
+      const el = document.createElement("div");
+      el.className = "panel price";
+      el.innerHTML = '<span class="d">'+d+'</span><span class="p">'+(pt[d]||"—")+
+        '</span><span class="s">'+(subtitle[d]||"")+'</span>';
+      grid.appendChild(el);
+    }
+    document.getElementById("terms").textContent = (s && s.terms) || CONFIG.fallbackSchema.terms;
+    const state = document.getElementById("apiState");
+    state.textContent = live ? "live · /v1/enrich/schema" : "offline fallback";
+    state.className = "pill " + (live ? "live" : "fill");
+  }
+  fetch("/v1/enrich/schema", {headers:{accept:"application/json"}})
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(s => renderSchema(s, true))
+    .catch(() => renderSchema(CONFIG.fallbackSchema, false));
+
+  /* ── on-chain proof rows ── */
+  (function(){
+    const list = document.getElementById("proofList");
+    for (const p of CONFIG.proof){
+      const base = p.kind === "tx" ? CONFIG.explorerTxBase : CONFIG.explorerAddrBase;
+      const filled = p.val && p.val.trim() !== "";
+      const valHtml = !filled
+        ? '<span class="pill fill">fill in CONFIG.proof</span>'
+        : (base ? '<a class="val" href="'+base+p.val+'" target="_blank" rel="noopener">'+p.val+'</a>'
+                : '<span class="val">'+p.val+'</span>');
+      const row = document.createElement("div");
+      row.className = "row";
+      row.innerHTML = '<span class="lab">'+p.lab+'</span>'+valHtml;
+      list.appendChild(row);
+    }
+  })();
+
+  /* ── video embed ── */
+  if (CONFIG.videoEmbedUrl && CONFIG.videoEmbedUrl.trim() !== ""){
+    const box = document.getElementById("videoBox");
+    box.innerHTML = '<iframe src="'+CONFIG.videoEmbedUrl+'" title="Proprietor demo" allowfullscreen '+
+      'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>';
+  }
+</script>
+</body>
+</html>

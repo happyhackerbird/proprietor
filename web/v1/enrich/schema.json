@@ -1,0 +1,10 @@
+{
+  "input": { "company": "string", "depth": "basic|standard|comprehensive" },
+  "output": "CompanyProfile",
+  "price_table": {
+    "basic": "$0.01",
+    "standard": "$0.03",
+    "comprehensive": "$0.08"
+  },
+  "terms": "x402 USDC on Arc Testnet; decline-before-charge; no refunds."
+}
