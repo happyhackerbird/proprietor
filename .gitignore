@@ -40,3 +40,4 @@ data/*.local.json
 .ilnamiquiliatsaa_backups/
 .ilnamiquiliatsaa/tsaa
 claude.session
+.demo-pids
