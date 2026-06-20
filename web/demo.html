@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Proprietor — Live Demo Console</title>
+<style>
+  :root{
+    --bg:#0a0c10; --panel:#12151c; --panel2:#0e1117; --line:#222936;
+    --ink:#e7ecf3; --mut:#93a0b4; --acc:#5eead4; --acc2:#7dd3fc;
+    --warn:#fbbf24; --good:#34d399; --bad:#f87171;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1400px 700px at 50% -250px,#16202c,var(--bg) 60%);
+    color:var(--ink);font-family:var(--sans);line-height:1.5;font-size:14px}
+  a{color:var(--acc2)}
+  .wrap{max-width:1180px;margin:0 auto;padding:18px 22px 60px}
+  header{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;padding:8px 0 16px;border-bottom:1px solid var(--line)}
+  h1{margin:0;font-size:26px;letter-spacing:-.01em;
+    background:linear-gradient(180deg,#fff,#9fb2c8);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--mut);font-size:13px;margin-top:2px}
+  .stack{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{font:600 11px/1 var(--sans);padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--mut);white-space:nowrap}
+  .chip b{color:var(--acc)}
+  .grid{display:grid;gap:14px;margin-top:16px}
+  .cols-2{grid-template-columns:1.2fr .8fr}
+  .cols-3{grid-template-columns:repeat(3,1fr)}
+  .cols-4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:900px){.cols-2,.cols-3,.cols-4{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .card h2{margin:0 0 10px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .card h2 .hint{color:#5b6b80;font-weight:500;letter-spacing:0;text-transform:none;font-size:11px}
+  .eli5{background:linear-gradient(180deg,#0f201d,#0e1117);border:1px solid #1e4a44}
+  .eli5 p{margin:0 0 8px;color:#cfeae5}
+  .eli5 b{color:var(--acc)}
+  .eli5 ul{margin:8px 0 0;padding-left:18px}
+  .eli5 li{margin-bottom:4px}
+  .status-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line);gap:10px}
+  .status-row:last-child{border-bottom:0}
+  .status-row .lbl{font:600 12px/1 var(--sans);color:var(--ink)}
+  .status-row .url{font-family:var(--mono);font-size:11px;color:#5b6b80;word-break:break-all}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;background:#3a4659;box-shadow:0 0 0 0 rgba(94,234,212,.0)}
+  .dot.ok{background:var(--good);box-shadow:0 0 0 4px rgba(52,211,153,.15)}
+  .dot.bad{background:var(--bad);box-shadow:0 0 0 4px rgba(248,113,113,.15)}
+  .dot.warn{background:var(--warn);box-shadow:0 0 0 4px rgba(251,191,36,.15)}
+  .dot.live{animation:pulse 1.6s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(94,234,212,.5)}70%{box-shadow:0 0 0 10px rgba(94,234,212,0)}100%{box-shadow:0 0 0 0 rgba(94,234,212,0)}}
+  .price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .price{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px}
+  .price .d{font:700 11px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--acc)}
+  .price .p{font:700 22px/1 var(--mono);color:var(--ink)}
+  .price .s{font-size:11px;color:var(--mut)}
+  .price.unav .p{color:var(--mut)}
+  .price.unav .d{color:var(--warn)}
+  .row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:8px 10px;
+    background:var(--panel2);border:1px solid var(--line);border-radius:8px;margin-bottom:6px;flex-wrap:wrap}
+  .row .k{font:600 11px/1 var(--sans);letter-spacing:.05em;text-transform:uppercase;color:var(--mut)}
+  .row .v{font-family:var(--mono);font-size:12px;color:var(--ink);word-break:break-all;text-align:right}
+  .row.h{flex-direction:column;align-items:stretch;gap:4px}
+  .row.h .v{text-align:left}
+  .field{display:flex;flex-direction:column;gap:4px;padding:10px;background:var(--panel2);border:1px solid var(--line);border-radius:8px}
+  .field .name{font:700 12px/1 var(--mono);color:var(--acc)}
+  .field .why{font-size:12px;color:var(--mut)}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  input,select{font:600 13px/1 var(--sans);padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);min-width:200px}
+  input:focus,select:focus{outline:0;border-color:var(--acc)}
+  button{font:700 13px/1 var(--sans);padding:11px 16px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);cursor:pointer}
+  button.primary{background:var(--acc);color:#04201b;border-color:transparent}
+  button:hover{transform:translateY(-1px)}
+  button:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  pre{font-family:var(--mono);font-size:12px;line-height:1.5;color:#cdd8e6;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto;margin:0;max-height:280px;white-space:pre-wrap;word-break:break-word}
+  pre.copyable{position:relative}
+  .copybtn{position:absolute;top:6px;right:6px;font:600 10px/1 var(--sans);padding:5px 8px;border-radius:6px;border:1px solid var(--line);background:#10141b;color:var(--mut);cursor:pointer}
+  .copybtn:hover{color:var(--ink)}
+  .progress{height:8px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;overflow:hidden;margin:8px 0 4px}
+  .progress > div{height:100%;width:0%;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .25s ease}
+  .progress.indet > div{width:30%;animation:slide 1.2s infinite linear;background:linear-gradient(90deg,transparent,var(--acc),transparent)}
+  @keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(400%)}}
+  .stage{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12px;color:var(--mut);border-bottom:1px dashed var(--line)}
+  .stage:last-child{border-bottom:0}
+  .stage .l{display:flex;align-items:center;gap:8px}
+  .stage.done{color:var(--good)}
+  .stage.run{color:var(--acc)}
+  .stage.err{color:var(--bad)}
+  .spinner{width:12px;height:12px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--acc);animation:spin .8s linear infinite;display:inline-block}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .logs{font-family:var(--mono);font-size:11.5px;line-height:1.55;color:#a8b6c8;background:#06080c;border:1px solid var(--line);border-radius:8px;padding:10px;max-height:300px;overflow:auto}
+  .logs .json{color:var(--acc)}
+  .logs .err{color:var(--bad)}
+  .logs .ts{color:#5b6b80}
+  .tabs{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap}
+  .tab{font:600 11px/1 var(--sans);padding:7px 11px;border-radius:6px;border:1px solid var(--line);background:var(--panel2);color:var(--mut);cursor:pointer}
+  .tab.on{color:var(--acc);border-color:var(--acc)}
+  .footer{margin-top:18px;color:var(--mut);font-size:12px;text-align:center}
+  .legend{font-size:12px;color:var(--mut)}
+  .links a{display:inline-block;margin-right:10px;font-size:12.5px}
+  ul.glos{list-style:none;padding:0;margin:0}
+  ul.glos li{padding:8px 0;border-bottom:1px dashed var(--line)}
+  ul.glos li:last-child{border-bottom:0}
+  ul.glos b{color:var(--acc)}
+  .anim{display:flex;justify-content:center;align-items:center;gap:14px;padding:8px 0;min-height:60px}
+  .coin{width:36px;height:36px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#a7f3d0,#0f766e);box-shadow:0 0 16px rgba(94,234,212,.3);position:relative;animation:flip 2.4s infinite}
+  .coin::after{content:"$";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#04201b;font-weight:900;font-family:var(--mono)}
+  @keyframes flip{0%,100%{transform:rotateY(0)}50%{transform:rotateY(180deg)}}
+  .arrow{font-size:24px;color:var(--mut);animation:slideX 1.2s infinite}
+  @keyframes slideX{0%,100%{transform:translateX(0)}50%{transform:translateX(8px)}}
+  .box{padding:10px 12px;border:1px dashed var(--line);border-radius:8px;color:var(--mut);font:600 11px/1.2 var(--sans);text-align:center;min-width:80px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <h1>Proprietor — Live Demo Console</h1>
+      <div class="sub">An AI agent that owns and operates a company, paid in USDC.</div>
+    </div>
+    <div class="stack">
+      <span class="chip"><b>Circle</b> Agent Wallet</span>
+      <span class="chip"><b>x402</b> nanopayments</span>
+      <span class="chip"><b>USDC</b> on Arc Testnet</span>
+      <span class="chip"><b>Claude</b> Agent SDK (CFO)</span>
+      <span class="chip"><b>Tavily</b> search</span>
+      <span class="chip"><b>Nebius</b> TokenFactory</span>
+      <span class="chip">FastAPI · Express · TS</span>
+    </div>
+  </header>
+
+  <!-- ELI5 -->
+  <section class="grid cols-2">
+    <div class="card eli5">
+      <h2>Explain like I'm 5 <span class="hint">why this matters</span></h2>
+      <p>Imagine a <b>robot shopkeeper</b>. It has a piggy bank full of digital dollars (USDC). When you ask it a question about a company, it:</p>
+      <ul>
+        <li>1. Tells you the <b>price</b> first.</li>
+        <li>2. You drop coins in its piggy bank.</li>
+        <li>3. It pays <b>another robot</b> (a researcher) to do the work.</li>
+        <li>4. It gives you the answer plus a <b>receipt</b> showing every coin in and out.</li>
+        <li>5. If a job costs too much, it <b>raises its price</b> all by itself.</li>
+      </ul>
+      <p style="margin-top:8px">No human approves the trades. The <b>piggy bank itself</b> is the rule book.</p>
+    </div>
+
+    <div class="card">
+      <h2>How the money flows <span class="hint">animated</span></h2>
+      <div class="anim">
+        <div class="box">Buyer</div>
+        <div class="arrow">→</div>
+        <div class="coin"></div>
+        <div class="arrow">→</div>
+        <div class="box">Storefront</div>
+        <div class="arrow">→</div>
+        <div class="coin"></div>
+        <div class="arrow">→</div>
+        <div class="box">Supplier</div>
+      </div>
+      <div class="legend" style="text-align:center;margin-top:4px">Every arrow = one on-chain USDC transfer · the receipt records both tx hashes.</div>
+    </div>
+  </section>
+
+  <!-- Status -->
+  <section class="grid cols-4" style="margin-top:14px">
+    <div class="card" id="svcCard">
+      <h2>Services <span class="hint">auto-refresh</span></h2>
+      <div id="services"></div>
+    </div>
+
+    <div class="card">
+      <h2>Treasury <span class="hint">budget</span></h2>
+      <div class="row"><span class="k">Treasury</span><span class="v" id="treasuryAddr">—</span></div>
+      <div class="row"><span class="k">Supplier</span><span class="v" id="supplierAddr">—</span></div>
+      <div class="row"><span class="k">Buyer</span><span class="v" id="buyerAddr">—</span></div>
+      <div class="row"><span class="k">Chain</span><span class="v" id="chain">ARC-TESTNET</span></div>
+    </div>
+
+    <div class="card" style="grid-column:span 2">
+      <h2>Price table <span class="hint">live from /v1/enrich/schema</span></h2>
+      <div class="price-grid" id="prices">
+        <div class="price"><span class="d">basic</span><span class="p">—</span><span class="s">loading…</span></div>
+        <div class="price"><span class="d">standard</span><span class="p">—</span><span class="s">loading…</span></div>
+        <div class="price"><span class="d">comprehensive</span><span class="p">—</span><span class="s">loading…</span></div>
+      </div>
+      <div class="legend" style="margin-top:8px">Buyer pays the depth they pick. Unavailable depths return <code>409</code>, never a payable <code>402</code>.</div>
+    </div>
+  </section>
+
+  <!-- Trigger -->
+  <section class="grid cols-2" style="margin-top:14px">
+    <div class="card">
+      <h2>Run the demo <span class="hint">/v1/preview is free · paid uses Circle CLI</span></h2>
+      <div class="controls">
+        <input id="company" type="text" placeholder="company, e.g. stripe.com" value="stripe.com" />
+        <select id="depth">
+          <option value="basic">basic</option>
+          <option value="standard" selected>standard</option>
+          <option value="comprehensive">comprehensive</option>
+        </select>
+        <button id="btnPreview" class="primary">Preview (free)</button>
+        <button id="btnPayCmd">Show paid command</button>
+        <button id="btnHealth">Re-check services</button>
+      </div>
+
+      <div class="progress" id="progress"><div></div></div>
+      <div id="stages"></div>
+    </div>
+
+    <div class="card">
+      <h2>Tabs <span class="hint">view receipt · profile · raw</span></h2>
+      <div class="tabs">
+        <div class="tab on" data-tab="receipt">Receipt &amp; fields</div>
+        <div class="tab" data-tab="profile">Profile</div>
+        <div class="tab" data-tab="raw">Raw JSON</div>
+        <div class="tab" data-tab="cmd">Paid CLI</div>
+      </div>
+
+      <div id="tab-receipt" class="tabpane">
+        <div id="receiptFields" class="grid" style="grid-template-columns:1fr 1fr;gap:8px">
+          <!-- field explainers injected -->
+        </div>
+      </div>
+      <div id="tab-profile" class="tabpane" hidden>
+        <pre id="profile">no profile yet — run a preview</pre>
+      </div>
+      <div id="tab-raw" class="tabpane" hidden>
+        <pre id="raw">no response yet</pre>
+      </div>
+      <div id="tab-cmd" class="tabpane" hidden>
+        <pre class="copyable" id="cmdBox">click "Show paid command" first<button class="copybtn" onclick="copyCmd()">copy</button></pre>
+        <div class="legend" style="margin-top:8px">Run that in a terminal where <code>circle</code> is authenticated. It triggers the full two-sided loop and prints a receipt with tx hashes.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Glossary + Logs -->
+  <section class="grid cols-2" style="margin-top:14px">
+    <div class="card">
+      <h2>Concepts <span class="hint">a tiny glossary</span></h2>
+      <ul class="glos">
+        <li><b>x402</b> — an HTTP standard: server replies <code>402 Payment Required</code> with a price &amp; address. Client pays, retries, gets the answer.</li>
+        <li><b>USDC</b> — a stablecoin: 1 USDC ≈ $1. We use it on Circle's <b>Arc Testnet</b> so demo money isn't real money.</li>
+        <li><b>Circle Agent Wallet</b> — programmable wallet held by the agent. Becomes the company's treasury.</li>
+        <li><b>Gateway / batched settlement</b> — Circle batches multiple x402 payments into one settlement; receipts may say <code>pending-batch</code> briefly.</li>
+        <li><b>CFO loop</b> — Claude Agent SDK decides: pay supplier? deny on budget? reprice? Each decision is logged with reasoning.</li>
+        <li><b>Receipt</b> — the proof: revenue, wholesale, margin, both on-chain tx hashes.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Logs <span class="hint">tailing logs/*.log</span></h2>
+      <div class="tabs" id="logTabs"></div>
+      <div class="logs" id="logs">select a log file…</div>
+    </div>
+  </section>
+
+  <!-- Demo links -->
+  <section class="card" style="margin-top:14px">
+    <h2>Demo links &amp; topics</h2>
+    <div class="grid cols-3">
+      <div>
+        <div class="legend" style="margin-bottom:6px">Live endpoints</div>
+        <div class="links">
+          <a href="/api/storefront/healthz" target="_blank">/healthz</a>
+          <a href="/api/storefront/v1/enrich/schema" target="_blank">/v1/enrich/schema</a>
+          <a href="/api/engine/healthz" target="_blank">engine/healthz</a>
+          <a href="/api/supplier/healthz" target="_blank">supplier/healthz</a>
+        </div>
+      </div>
+      <div>
+        <div class="legend" style="margin-bottom:6px">Talking points</div>
+        <ul class="glos" style="font-size:12.5px">
+          <li><b>Two-sided commerce</b> — money in &amp; out, not one-shot.</li>
+          <li><b>Reprice on loss</b> — agent raises price after a thin margin.</li>
+          <li><b>Decline-before-charge</b> — never collect 402 you can't fulfil.</li>
+        </ul>
+      </div>
+      <div>
+        <div class="legend" style="margin-bottom:6px">Tech stack</div>
+        <ul class="glos" style="font-size:12.5px">
+          <li><b>Circle</b> Agent Wallet · x402-batching</li>
+          <li><b>Claude</b> Agent SDK (CFO brain)</li>
+          <li><b>Tavily</b> search · <b>Nebius</b> TokenFactory LLMs</li>
+          <li>FastAPI engine · Express storefront · TS</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">
+    Proprietor — Agents Hackathon @ 42berlin · <a href="/">marketing page</a>
+  </div>
+</div>
+
+<script>
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+const SERVICES = [
+  { id: "storefront", label: "Storefront (x402 API)", path: "/api/storefront/healthz" },
+  { id: "engine",     label: "Engine (FastAPI enrich)", path: "/api/engine/healthz" },
+  { id: "supplier",   label: "Supplier (x402 seller)",  path: "/api/supplier/healthz" },
+  { id: "demo",       label: "Demo proxy",              path: "/api/config" },
+];
+
+const FIELD_EXPLAIN = {
+  revenue_usdc:      "What the buyer paid in. The storefront's income.",
+  wholesale_usdc:    "What we paid the supplier-agent to fulfil this job.",
+  margin_usdc:       "revenue − wholesale. Positive = profit.",
+  revenue_tx_hash:   "On-chain hash of the buyer → treasury payment.",
+  supplier_tx_hash:  "On-chain hash of the treasury → supplier payment.",
+  settlement:        "settled (final) or pending-batch (Circle Gateway still batching).",
+  depth_served:      "Which tier the engine actually returned.",
+  cache_hit:         "If true, we reused an earlier enrichment (cheaper).",
+};
+
+let CFG = { storefront: "", engine: "", supplier: "" };
+
+async function loadConfig() {
+  const r = await fetch("/api/config");
+  CFG = await r.json();
+}
+
+function badge(state) {
+  return `<span class="dot ${state}"></span>`;
+}
+
+async function ping(svc) {
+  try {
+    const t0 = performance.now();
+    const r = await fetch(svc.path, { method: "GET" });
+    const ms = Math.round(performance.now() - t0);
+    return { ok: r.ok, code: r.status, ms };
+  } catch (e) { return { ok: false, code: 0, err: String(e) }; }
+}
+
+async function refreshServices() {
+  const root = $("#services");
+  root.innerHTML = SERVICES.map(s => `
+    <div class="status-row" data-svc="${s.id}">
+      <div>
+        <div class="lbl">${badge('warn')} ${s.label}</div>
+        <div class="url">${s.path}</div>
+      </div>
+      <div class="v" data-stat>checking…</div>
+    </div>
+  `).join("");
+  for (const s of SERVICES) {
+    const res = await ping(s);
+    const row = root.querySelector(`[data-svc="${s.id}"]`);
+    const state = res.ok ? 'ok live' : 'bad';
+    row.querySelector('.lbl').innerHTML = `${badge(state)} ${s.label}`;
+    row.querySelector('[data-stat]').textContent = res.ok ? `${res.code} · ${res.ms}ms` : `down (${res.code || 'err'})`;
+  }
+}
+
+async function loadSchema() {
+  try {
+    const r = await fetch("/api/storefront/v1/enrich/schema");
+    const j = await r.json();
+    const table = j.price_table || {};
+    const depths = ["basic", "standard", "comprehensive"];
+    $("#prices").innerHTML = depths.map(d => {
+      const t = table[d] || { available: false };
+      const av = t.available !== false;
+      return `<div class="price ${av ? '' : 'unav'}">
+        <span class="d">${d}</span>
+        <span class="p">${av ? (t.price_usdc ?? '—') + ' USDC' : 'unavailable'}</span>
+        <span class="s">${av ? (t.note ?? 'paid via x402') : 'returns 409'}</span>
+      </div>`;
+    }).join("");
+  } catch (e) {
+    $("#prices").innerHTML = `<div class="price"><span class="d">offline</span><span class="p">—</span><span class="s">storefront not reachable</span></div>`;
+  }
+}
+
+const STAGES = [
+  { id: 'route',   label: 'Route through demo proxy' },
+  { id: 'engine',  label: 'Call engine /preview' },
+  { id: 'parse',   label: 'Parse CompanyProfile' },
+  { id: 'render',  label: 'Render fields + receipt' },
+];
+
+function setStages(map) {
+  $("#stages").innerHTML = STAGES.map(s => {
+    const st = map[s.id] || 'wait';
+    const ico = st === 'done' ? '✓' : st === 'run' ? '<span class="spinner"></span>' : st === 'err' ? '✗' : '·';
+    return `<div class="stage ${st === 'wait' ? '' : st}"><div class="l">${ico} ${s.label}</div><div>${st}</div></div>`;
+  }).join("");
+}
+
+function setProgress(pct, indet=false) {
+  const bar = $("#progress");
+  bar.classList.toggle('indet', indet);
+  bar.firstElementChild.style.width = pct + '%';
+}
+
+function renderReceiptFields(receipt) {
+  const root = $("#receiptFields");
+  if (!receipt) {
+    root.innerHTML = `<div class="field" style="grid-column:span 2"><span class="name">no receipt</span><span class="why">Free /preview returns a profile + cost only — run the paid command to see a real receipt with tx hashes.</span></div>`;
+    return;
+  }
+  root.innerHTML = Object.entries(FIELD_EXPLAIN).map(([k, why]) => {
+    const v = receipt[k];
+    return `<div class="field"><span class="name">${k}</span><span class="why">${why}</span><span class="v" style="font-family:var(--mono);font-size:12px;color:#cdd8e6;word-break:break-all">${v ?? '—'}</span></div>`;
+  }).join("");
+}
+
+async function runPreview() {
+  const company = $("#company").value.trim();
+  if (!company) return;
+  const btn = $("#btnPreview"); btn.disabled = true;
+  setStages({ route: 'run' }); setProgress(15, true);
+  try {
+    const r = await fetch("/api/storefront/v1/preview", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ company }),
+    });
+    setStages({ route: 'done', engine: 'run' }); setProgress(60, true);
+    const j = await r.json();
+    setStages({ route: 'done', engine: 'done', parse: 'run' }); setProgress(80);
+    $("#raw").textContent = JSON.stringify(j, null, 2);
+    $("#profile").textContent = JSON.stringify(j.profile ?? j, null, 2);
+    // /preview has no receipt, but show estimated cost if present
+    renderReceiptFields(j.receipt ?? null);
+    setStages({ route: 'done', engine: 'done', parse: 'done', render: 'done' });
+    setProgress(100, false);
+  } catch (e) {
+    setStages({ route: 'done', engine: 'err' });
+    setProgress(100, false);
+    $("#raw").textContent = "error: " + e;
+  } finally {
+    btn.disabled = false;
+    setTimeout(() => setProgress(0, false), 1200);
+  }
+}
+
+function showPayCmd() {
+  const company = $("#company").value.trim() || "stripe.com";
+  const depth = $("#depth").value;
+  const url = `${CFG.storefront || 'http://127.0.0.1:3000'}/v1/enrich/${depth}`;
+  const cmd = [
+    `# 1) Confirm you get a 402 before paying:`,
+    `curl -i -X POST ${url} -H 'content-type: application/json' -d '{"company":"${company}"}'`,
+    ``,
+    `# 2) Pay it via the Circle CLI (requires authenticated session):`,
+    `circle services pay ${url} \\`,
+    `  --address "$BUYER_WALLET_ADDRESS" --chain ARC-TESTNET \\`,
+    `  -X POST -d '{"company":"${company}"}' \\`,
+    `  --max-amount 0.2 --timeout 180 --output json | jq '.data.response.receipt'`,
+    ``,
+    `# Or just run the full live-verify script:`,
+    `npm run live-verify -- --depth ${depth} --company ${company}`,
+  ].join("\n");
+  $("#cmdBox").firstChild.textContent = cmd;
+  $$(".tab").forEach(t => t.classList.toggle('on', t.dataset.tab === 'cmd'));
+  $$(".tabpane").forEach(p => p.hidden = p.id !== 'tab-cmd');
+}
+
+function copyCmd() {
+  const txt = $("#cmdBox").firstChild.textContent;
+  navigator.clipboard?.writeText(txt);
+}
+
+$$(".tab").forEach(t => t.addEventListener('click', () => {
+  $$(".tab").forEach(x => x.classList.toggle('on', x === t));
+  $$(".tabpane").forEach(p => p.hidden = p.id !== `tab-${t.dataset.tab}`);
+}));
+
+async function refreshLogList() {
+  const r = await fetch("/api/logs?list=1");
+  const { files } = await r.json();
+  if (!files || !files.length) {
+    $("#logTabs").innerHTML = `<span class="legend">no logs yet — run <code>./demo.sh</code></span>`;
+    $("#logs").textContent = "(empty)";
+    return;
+  }
+  $("#logTabs").innerHTML = files.map((f, i) => `<div class="tab ${i===0?'on':''}" data-log="${f}">${f}</div>`).join("");
+  $$("#logTabs .tab").forEach(t => t.addEventListener('click', () => {
+    $$("#logTabs .tab").forEach(x => x.classList.toggle('on', x === t));
+    loadLog(t.dataset.log);
+  }));
+  loadLog(files[0]);
+}
+
+async function loadLog(file) {
+  const r = await fetch(`/api/logs?file=${encodeURIComponent(file)}&lines=400`);
+  const txt = await r.text();
+  $("#logs").innerHTML = txt.split("\n").map(line => {
+    if (!line) return "";
+    let cls = "";
+    if (/\b(error|err|✗|denied|failed)\b/i.test(line)) cls = "err";
+    else if (/^\{/.test(line)) cls = "json";
+    return `<div class="${cls}">${line.replace(/[<&]/g, c => ({ '<':'&lt;','&':'&amp;' }[c]))}</div>`;
+  }).join("");
+  $("#logs").scrollTop = $("#logs").scrollHeight;
+}
+
+$("#btnPreview").addEventListener('click', runPreview);
+$("#btnPayCmd").addEventListener('click', showPayCmd);
+$("#btnHealth").addEventListener('click', () => { refreshServices(); loadSchema(); });
+
+(async () => {
+  await loadConfig();
+  renderReceiptFields(null);
+  setStages({});
+  refreshServices();
+  loadSchema();
+  refreshLogList();
+  setInterval(refreshServices, 5000);
+  setInterval(refreshLogList, 4000);
+})();
+</script>
+</body>
+</html>
