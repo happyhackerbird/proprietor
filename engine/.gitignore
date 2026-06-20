@@ -1,0 +1,15 @@
+# Local cache / runtime state (SQLite profile cache lives here)
+data/
+
+# Virtualenv
+.venv/
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Pytest
+.pytest_cache/
+
+# Secrets
+.env
