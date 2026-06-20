@@ -33,32 +33,44 @@ that money is *"the final tool every economic actor needs."* Proprietor makes th
 ## How it works (the loop)
 
 ```
-                   ┌──────────────────────────────────────────────────┐
-   customer-agent  │                  PROPRIETOR                       │
-        │          │  ┌────────────┐   ┌───────────┐   ┌────────────┐  │
-        │ 1. GET   │  │ Storefront │   │    CFO     │   │ Fulfilment │  │
-        │  schema  │  │  (x402     │──▶│  pricing + │──▶│  engine    │  │
-        │  + price │  │   API)     │   │  solvency  │   │ (research) │  │
-        │◀─────────┼──│            │   └───────────┘   └─────┬──────┘  │
-        │ 2. POST  │  └─────┬──────┘                         │         │
-        │  {domain}│        │                                │ pays    │
-        │◀── 402 ──┼────────┘                                ▼ USDC    │
-        │ 3. pay   │  ┌───────────────────┐          ┌───────────────┐ │
-        │  USDC ───┼─▶│ Circle Agent      │◀─────────│ Supplier-agent│ │
-        │          │  │ Wallet (treasury) │  pays    │ (Tavily +     │ │
-        │ 4. brief │  └───────────────────┘  USDC    │  Nebius x402) │ │
-        │◀─────────┼──── + receipt (tx hashes, cost breakdown, margin)│ │
-        └──────────┤                                 └───────────────┘ │
-                   └──────────────────────────────────────────────────┘
+  ┌──────────────────────────────────────────────┐
+  │ customer-agent  (buyer)                      │
+  └──────────────────────────────────────────────┘
+                          │  1. pay RETAIL    (USDC · x402)
+                          ▼
+  ┌──────────────────────────────────────────────┐
+  │ PROPRIETOR  —  Storefront (x402)             │
+  │   →  CFO agent (Claude):                     │
+  │       balance → budget gate → decide         │
+  └──────────────────────────────────────────────┘
+                          │  2. pay WHOLESALE   (USDC · x402)
+                          ▼
+  ┌──────────────────────────────────────────────┐
+  │ Supplier-agent  (sells research per depth)   │
+  └──────────────────────────────────────────────┘
+                          │  3. HTTP call   (no money)
+                          ▼
+  ┌──────────────────────────────────────────────┐
+  │ Fulfilment engine                            │
+  │   =  Tavily (search) + Nebius (inference)    │
+  └──────────────────────────────────────────────┘
+                          │  4. CompanyProfile  →  receipt
+                          ▼
+  ┌──────────────────────────────────────────────┐
+  │ receipt → customer-agent                     │
+  │ revenue − wholesale = margin · tx hashes     │
+  └──────────────────────────────────────────────┘
+
+  Money crosses ONE hop — CFO → Supplier (USDC on Arc Testnet); the research happens
+  behind it (Supplier → Engine, HTTP).   Claude = reasoning · Tavily = search · Nebius = inference.
 ```
 
-1. A buyer-agent **discovers** the service on the **Circle Agent Marketplace** and reads its published **schema + current price**.
-2. It POSTs a company domain; the API replies **`402 Payment Required`** with the price and pay-to address.
-3. The buyer **pays USDC** → revenue lands in the treasury.
-4. Proprietor decides the job is worth doing, **pays its own suppliers in USDC**, fulfills, and returns
-   the brief **plus a receipt**: revenue, itemized costs, transaction hashes, and gross margin.
+1. A buyer-agent inspects the storefront's **price + schema** (`GET /v1/enrich/schema`) and POSTs a company; unpaid → **`402 Payment Required`**.
+2. The buyer **pays RETAIL in USDC** (x402) → revenue lands in the treasury.
+3. The **CFO agent (Claude)** checks the treasury balance, clears its **budget gate** (cap / runway / approval), and — the one place money leaves the treasury — **pays the supplier WHOLESALE in USDC** (x402).
+4. The **supplier fulfils via the engine** (**Tavily** search + **Nebius** inference) and returns the `CompanyProfile`; the CFO returns the brief **plus a receipt** (revenue − wholesale = **margin**, tx hashes) and writes the ledger.
 
-Between jobs, the CFO watches the treasury and **adjusts the public price** to defend margin.
+Between jobs, the CFO **reprices retail** to defend margin. (Brain = Claude · search = Tavily · inference = Nebius.)
 
 ## Circle Agent Stack usage
 
