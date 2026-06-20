@@ -98,13 +98,15 @@ class FakeLLMClient:
 
 
 class FakeSearchClient:
-    """A scripted, offline ``SearchClient`` that counts calls."""
+    """A scripted, offline ``SearchClient`` that records the queries it receives."""
 
     def __init__(self) -> None:
         self.call_count = 0
+        self.queries: list[str] = []
 
     async def search(self, query: str, *, max_results: int) -> list[SearchResult]:
         self.call_count += 1
+        self.queries.append(query)
         return [
             SearchResult(
                 title="Result",

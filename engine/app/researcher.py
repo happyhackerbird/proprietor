@@ -171,6 +171,9 @@ class Researcher:
         return res.text
 
     async def _search(self, query: str, *, max_results: int = 5) -> list[SearchResult]:
+        # Tavily rejects queries over 400 chars (BadRequestError); clamp here at
+        # the single gateway so domain + follow-up searches are both covered.
+        query = query.strip()[:400]
         results = await self.search.search(query, max_results=max_results)
         self.meter.record_search()
         return results
