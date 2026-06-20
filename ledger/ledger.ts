@@ -11,6 +11,8 @@
  * (cfo/gate.ts) reads it to enforce DAILY_CAP_USDC.
  */
 import { DatabaseSync } from "node:sqlite";
+import { mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 import type { Depth } from "../lib/env.ts";
 
 export type Settlement = "settled" | "pending-batch";
@@ -78,6 +80,11 @@ export class Ledger {
   private readonly db: DatabaseSync;
 
   constructor(path: string = ":memory:") {
+    // node:sqlite does not create the parent directory — ensure it exists for
+    // file-backed DBs (":memory:" and other special ":"-prefixed paths have none).
+    if (path !== ":memory:" && !path.startsWith(":") && !path.includes("mode=memory")) {
+      mkdirSync(dirname(path), { recursive: true });
+    }
     this.db = new DatabaseSync(path);
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS orders (
