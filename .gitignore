@@ -35,3 +35,6 @@ data/*.local.json
 .DS_Store
 .idea/
 .vscode/
+
+# IlnamiquiliaTsaa local backups (never commit)
+.ilnamiquiliatsaa_backups/
