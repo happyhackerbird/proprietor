@@ -13,6 +13,7 @@
     "smoke": "tsx money/smoke.ts",
     "supplier": "tsx supplier/research-seller.ts",
     "storefront": "tsx storefront/server.ts",
+    "live-verify": "bash scripts/live-verify.sh",
     "cfo": "tsx cfo/main.ts",
     "cfo:reprice": "tsx cfo/reprice.ts",
     "cfo:ledger": "tsx cfo/ledger-cli.ts"
