@@ -40,11 +40,14 @@ transfer.
 https://github.com/happyhackerbird/proprietor
 
 ## Live deployment
-⟨FILL — see options discussed; likely one of:⟩
+- **Front-door site (Vercel):** https://proprietor-git-submission-vercel-site-lillyguo-projects.vercel.app
+  _(preview build of branch `submission/vercel-site`; production URL follows once PR #8 merges to `main`)._
+  **⚠ Action required:** disable Vercel **Deployment Protection** (Settings → Deployment Protection →
+  Vercel Authentication → off) or the URL shows a Vercel login wall to judges.
+- **Live API endpoint:** `…/v1/enrich/schema` — the real x402 price table + terms (same JSON a buyer-agent inspects).
 - **On-chain proof (Arc Testnet):** live-verified two-sided USDC loop. Settlement tx hashes from
   `npm run live-verify`: ⟨paste revenue_tx_hash / supplier_tx_hash + block-explorer links⟩
 - **Wallet addresses (treasury / supplier / buyer):** ⟨paste the three public addresses⟩
-- ⟨or a public hosted storefront URL, if deployed⟩
 
 ## Demo video (2–3 min, max 5)
 ⟨FILL — public link (YouTube/Loom/Drive), set to "anyone with link can view"⟩
