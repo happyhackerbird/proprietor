@@ -16,8 +16,11 @@
   },
   "dependencies": {
     "@circle-fin/x402-batching": "^3.2.0",
+    "@x402/core": "^2.16.0",
+    "@x402/evm": "^2.16.0",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "viem": "^2.52.2"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
