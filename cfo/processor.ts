@@ -144,10 +144,12 @@ export class CfoProcessor {
     }
     wholesaleUsdc = round6(wholesaleUsdc);
 
-    // 3+4. Gate + pay through the single CfoFulfiller spend path. The wrapper runs
-    // evaluateGate against this order's wholesale amount, then delegates to the inner
+    // 3+4. Gate + pay through the single CfoFulfiller spend path. The wrapper gates ON the
+    // interface seam: its gate context carries amountUsdc = this order's wholesale, so
+    // evaluateGate runs against the real spend before delegating to the inner
     // SupplierFulfiller (the on-chain pay) only on allow (decline-before-charge).
     const gateCtx = (): GateContext => ({
+      amountUsdc: wholesaleUsdc,
       balanceUsdc,
       cumulativeTodayUsdc: this.ledger.cumulativeSpentToday(this.now()),
       dailyCapUsdc: this.config.dailyCapUsdc,
@@ -159,10 +161,7 @@ export class CfoProcessor {
 
     let fulfilment: FulfilResult;
     try {
-      fulfilment = await gatedFulfiller.fulfilGated(
-        { company: order.company, depth: order.depth },
-        wholesaleUsdc,
-      );
+      fulfilment = await gatedFulfiller.fulfilGated({ company: order.company, depth: order.depth });
     } catch (err) {
       if (err instanceof GatePausedError) {
         // Decline-before-charge: record the denied attempt (amount 0 so it never inflates
