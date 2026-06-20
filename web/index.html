@@ -111,26 +111,37 @@
 
   <section id="how">
     <h2>How it works — the loop</h2>
-    <div class="panel"><pre class="diagram">                   ┌──────────────────────────────────────────────────┐
-   customer-agent  │                  PROPRIETOR                       │
-        │          │  ┌────────────┐   ┌───────────┐   ┌────────────┐  │
-        │ 1. GET   │  │ Storefront │   │    CFO     │   │ Fulfilment │  │
-        │  schema  │  │  (x402     │──▶│  pricing + │──▶│  engine    │  │
-        │  + price │  │   API)     │   │  solvency  │   │ (research) │  │
-        │◀─────────┼──│            │   └───────────┘   └─────┬──────┘  │
-        │ 2. POST  │  └─────┬──────┘                         │         │
-        │  {domain}│        │                                │ pays    │
-        │◀── 402 ──┼────────┘                                ▼ USDC    │
-        │ 3. pay   │  ┌───────────────────┐          ┌───────────────┐ │
-        │  USDC ───┼─▶│ Circle Agent      │◀─────────│ Supplier-agent│ │
-        │          │  │ Wallet (treasury) │  pays    │ (Tavily +     │ │
-        │ 4. brief │  └───────────────────┘  USDC    │  Nebius x402) │ │
-        │◀─────────┼──── + receipt (tx hashes, cost breakdown, margin)│ │
-        └──────────┤                                 └───────────────┘ │
-                   └──────────────────────────────────────────────────┘</pre></div>
-    <p class="note">A buyer-agent inspects the price + schema, POSTs a domain, gets <code class="inline">402 Payment Required</code>,
-      pays USDC → revenue lands in the treasury → Proprietor pays its supplier in USDC, fulfils, and returns the brief
-      <b>plus a receipt</b>: revenue, itemized costs, transaction hashes, and gross margin.</p>
+    <div class="panel"><pre class="diagram">  customer-agent
+       │  1. GET /v1/enrich/schema           → price + terms
+       │  2. POST /v1/enrich/{depth}         → 402 Payment Required
+       │  3. pay RETAIL in USDC (x402)
+       ▼
+  ── PROPRIETOR  (all our code) ──────────────────────────────────────
+       Storefront (x402)  ──▶  CFO agent  (Claude reasons)
+         collects retail        balance → budget gate → decide
+                                      │
+                                      │  4. pay WHOLESALE in USDC (x402)
+                                      ▼
+                               Supplier-agent  (sells research per depth)
+                                      │
+                                      │  5. HTTP call (no money)
+                                      ▼
+                               Fulfilment engine
+                                 = Tavily (search) + Nebius (inference)
+                                      │
+                                      ▼
+                               CompanyProfile
+  ────────────────────────────────────────────────────────────────────
+       ▲
+       │  6. brief + receipt   (revenue − wholesale = margin, tx hashes)
+  customer-agent
+
+  Money crosses ONE boundary: CFO → Supplier (USDC, x402); the research happens behind it
+  (Supplier → Engine, HTTP).   Claude = reasoning · Tavily = search · Nebius = inference.</pre></div>
+    <p class="note">A buyer-agent inspects the price + schema and pays <b>retail</b> in USDC (<code class="inline">402 Payment Required</code>).
+      The <b>CFO agent (Claude)</b> then checks the treasury, clears its budget gate, and pays the <b>supplier wholesale</b> in USDC (x402);
+      the supplier's engine does the research (<b>Tavily</b> search + <b>Nebius</b> inference) and returns the brief
+      <b>plus a receipt</b> — revenue − wholesale = <b>margin</b>, with transaction hashes.</p>
   </section>
 
   <section id="proof">
