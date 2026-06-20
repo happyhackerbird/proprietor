@@ -826,18 +826,23 @@ async function refreshServices() {
 }
 
 async function loadSchema() {
+  const subtitle = { basic: "quick profile", standard: "+ news & people", comprehensive: "full diligence" };
   try {
     const r = await fetch("/api/storefront/v1/enrich/schema");
     const j = await r.json();
     const table = j.price_table || {};
     const depths = ["basic", "standard", "comprehensive"];
     $("#prices").innerHTML = depths.map(d => {
-      const t = table[d] || { available: false };
-      const av = t.available !== false;
-      return `<div class="price ${av ? '' : 'unav'}">
+      const v = table[d];
+      // price_table[d] is a string like "$0.01"; tolerate an object form {available, price_usdc, note}
+      const unav = v && typeof v === "object" && v.available === false;
+      const price = unav ? "unavailable"
+                  : (typeof v === "string" ? v : ((v && v.price_usdc) ?? "—"));
+      const note = unav ? "returns 409" : (subtitle[d] || (v && v.note) || "paid via x402");
+      return `<div class="price ${unav ? 'unav' : ''}">
         <span class="d">${d}</span>
-        <span class="p">${av ? (t.price_usdc ?? '—') + ' USDC' : 'unavailable'}</span>
-        <span class="s">${av ? (t.note ?? 'paid via x402') : 'returns 409'}</span>
+        <span class="p">${price}</span>
+        <span class="s">${note}</span>
       </div>`;
     }).join("");
   } catch (e) {
